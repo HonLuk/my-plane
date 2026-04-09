@@ -1,0 +1,44 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Build zipapp
+      run: python build.py
+
+    - name: Get version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Release ${{ steps.version.outputs.VERSION }}
+        files: dist/plane
+        body: |
+          ## Plane CLI ${{ steps.version.outputs.VERSION }}
+
+          Single executable file for managing Plane.so projects.
+
+          ### Installation
+          ```bash
+          curl -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/plane
+          chmod +x ~/.local/bin/plane
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

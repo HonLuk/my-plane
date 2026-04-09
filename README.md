@@ -16,6 +16,26 @@
 - Zero dependencies — Python 3.8+ stdlib only
 - Color output with graceful degradation
 - Table and JSON output formats
+- Modular architecture for easy extension
+
+## Architecture
+
+```
+scripts/
+├── plane                 # Main CLI entry point
+├── plane_api.py          # API layer (auth, requests, errors)
+├── plane_output.py       # Output formatting (table/JSON)
+└── commands/             # Command handlers by endpoint
+    ├── user.py           # me
+    ├── workspace.py      # members
+    ├── projects.py       # projects CRUD
+    ├── work_items.py     # issues CRUD + search
+    ├── cycles.py         # cycles CRUD
+    ├── modules.py        # modules CRUD
+    ├── states.py         # states list
+    ├── labels.py         # labels list
+    └── comments.py       # comments list/add
+```
 
 ## Installation
 
@@ -25,15 +45,24 @@
 npx clawhub install my-plane
 ```
 
-### Manual
+### Manual Download
 
-Copy `SKILL.md` and `scripts/plane` into your agent's skill directory:
+Download the single executable file:
 
 ```bash
-mkdir -p ~/.openclaw/skills/my-plane/scripts
-cp SKILL.md ~/.openclaw/skills/my-plane/
-cp scripts/plane ~/.openclaw/skills/my-plane/scripts/
-chmod +x ~/.openclaw/skills/my-plane/scripts/plane
+curl -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane
+chmod +x ~/.local/bin/plane
+```
+
+Make sure `~/.local/bin` is in your PATH.
+
+### Build from Source
+
+```bash
+git clone https://github.com/HonLuk/my-plane.git
+cd my-plane
+python build.py
+cp dist/plane ~/.local/bin/plane
 ```
 
 ## Setup
@@ -64,36 +93,95 @@ plane members
 # List all projects
 plane projects list
 
+# Get project details
+plane projects get PROJECT_ID
+
+# Create a new project
+plane projects create --name "My App" --identifier "APP"
+
+# List work items in a project
+plane issues list -p PROJECT_ID
+
+# Filter work items
+plane issues list -p PROJECT_ID --priority high --state STATE_ID
+
+# Get work item by short ID (fastest way)
+plane issues get-short APP-42
+
+# Get work item by UUID
+plane issues get -p PROJECT_ID ISSUE_UUID
+
 # Create a work item
 plane issues create -p PROJECT_ID --name "Fix login bug" --priority high
 
-# Assign it to someone
-plane issues assign -p PROJECT_ID ISSUE_ID USER_ID
+# Update a work item
+plane issues update -p PROJECT_ID ISSUE_UUID --state STATE_ID --priority medium
 
-# Add a comment
-plane comments add -p PROJECT_ID -i ISSUE_ID "Working on this now"
+# Assign to members
+plane issues assign -p PROJECT_ID ISSUE_UUID USER_ID1 USER_ID2
+
+# Delete a work item
+plane issues delete -p PROJECT_ID ISSUE_UUID
 
 # Search across workspace
 plane issues search "login bug"
 
-# List cycles in a project
+# Add a comment
+plane comments add -p PROJECT_ID -i ISSUE_UUID "Working on this now"
+
+# List comments
+plane comments list -p PROJECT_ID -i ISSUE_UUID
+
+# List all activity (including field changes)
+plane comments list -p PROJECT_ID -i ISSUE_UUID --all
+
+# List cycles
 plane cycles list -p PROJECT_ID
+
+# Create a cycle
+plane cycles create -p PROJECT_ID --name "Sprint 1" --start 2026-01-27 --end 2026-02-10
+
+# List modules
+plane modules list -p PROJECT_ID
+
+# Create a module
+plane modules create -p PROJECT_ID --name "Auth Module" --description "Authentication features"
+
+# List workflow states (for getting state IDs)
+plane states -p PROJECT_ID
+
+# List labels (for getting label IDs)
+plane labels -p PROJECT_ID
 
 # JSON output
 plane projects list -f json
+plane issues list -p PROJECT_ID -f json
+```
+
+### Getting Help
+
+Every command has detailed help available:
+
+```bash
+plane --help
+plane issues --help
+plane issues create --help
+plane cycles --help
 ```
 
 ### All Commands
 
 | Command | Description |
 |---|---|
-| `plane me` | Show current user |
+| `plane me` | Show current user info |
 | `plane members` | List workspace members |
 | `plane projects list` | List all projects |
 | `plane projects get PROJECT_ID` | Get project details |
 | `plane projects create --name N --identifier I` | Create project |
 | `plane issues list -p PROJECT_ID` | List work items |
-| `plane issues get -p PROJECT_ID ISSUE_ID` | Get work item details |
+| `plane issues list -p PROJECT_ID --priority high` | Filter by priority |
+| `plane issues list -p PROJECT_ID --state STATE_ID` | Filter by state |
+| `plane issues get -p PROJECT_ID ISSUE_ID` | Get work item by UUID |
 | `plane issues get-short PROJECT-SEQ` | Get work item by short ID (e.g., PROJ-SEQ) |
 | `plane issues create -p PROJECT_ID --name N` | Create work item |
 | `plane issues update -p PROJECT_ID ISSUE_ID [--fields]` | Update work item |
@@ -101,6 +189,7 @@ plane projects list -f json
 | `plane issues delete -p PROJECT_ID ISSUE_ID` | Delete work item |
 | `plane issues search QUERY` | Search work items |
 | `plane comments list -p PROJECT_ID -i ISSUE_ID` | List comments/activity |
+| `plane comments list -p PROJECT_ID -i ISSUE_ID --all` | Show all activity |
 | `plane comments add -p PROJECT_ID -i ISSUE_ID "text"` | Add comment |
 | `plane cycles list -p PROJECT_ID` | List cycles |
 | `plane cycles get -p PROJECT_ID CYCLE_ID` | Get cycle details |
@@ -119,6 +208,43 @@ Work item listing supports filters:
 plane issues list -p PROJECT_ID --state STATE_ID
 plane issues list -p PROJECT_ID --priority high
 plane issues list -p PROJECT_ID --assignee USER_ID
+```
+
+### Pagination
+
+All list commands support cursor-based pagination:
+
+```bash
+# Basic list (shows pagination info)
+plane projects list
+
+# Specify page size
+plane issues list -p PROJECT_ID --per-page 20
+
+# Navigate pages using cursor (displayed in output)
+plane issues list -p PROJECT_ID --cursor "5:1:0"
+```
+
+Pagination info is displayed above the results:
+```
+Pagination: total: 50 | pages: 5 | showing: 10
+Next page: --cursor 10:1:0
+Prev page: --cursor 10:-1:1
+```
+
+### Field Selection & Expansion
+
+Control which fields are returned and expand related objects:
+
+```bash
+# Return only specific fields
+plane issues list -p PROJECT_ID --fields "id,name,state"
+
+# Expand related objects (assignees, state, labels, etc.)
+plane issues list -p PROJECT_ID --expand "assignees,state"
+
+# Sort results
+plane issues list -p PROJECT_ID --order-by "-created_at"
 ```
 
 ## How It Works

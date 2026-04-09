@@ -1,7 +1,7 @@
 ---
 name: my-plane
 description: "Manage Plane.so projects and work items using the `plane` CLI. List projects, create/update/search issues, manage cycles and modules, add comments, and assign members."
-metadata: {"moltbot":{"requires":{"bins":["plane"],"env":["PLANE_API_KEY","PLANE_WORKSPACE"]},"primaryEnv":"PLANE_API_KEY","emoji":"✈️","homepage":"https://github.com/HonLuk/plane-skill","install":[{"id":"github","kind":"download","url":"https://raw.githubusercontent.com/HonLuk/plane-skill/main/scripts/plane","targetDir":"~/.local/bin/","bins":["plane"],"label":"Download plane CLI from GitHub"}]}}
+metadata: {"moltbot":{"requires":{"bins":["plane"],"env":["PLANE_API_KEY","PLANE_WORKSPACE"]},"primaryEnv":"PLANE_API_KEY","emoji":"✈️","homepage":"https://github.com/HonLuk/my-plane","install":[{"id":"github","kind":"download","url":"https://github.com/HonLuk/my-plane/releases/latest/download/plane","targetDir":"~/.local/bin/","bins":["plane"],"label":"Download plane CLI from GitHub"}]}}
 ---
 
 # Plane Skill
@@ -10,10 +10,10 @@ Interact with [Plane.so](https://plane.so) project management via the `plane` CL
 
 ## Installation
 
-Download the CLI script and make it executable:
+Download the single executable file:
 
 ```bash
-curl -o ~/.local/bin/plane https://raw.githubusercontent.com/HonLuk/my-skill/main/scripts/plane
+curl -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane
 chmod +x ~/.local/bin/plane
 ```
 
@@ -60,12 +60,11 @@ plane projects create --name "My Project" --identifier "PROJ"  # Create project
 # List work items
 plane issues list -p PROJECT_ID
 plane issues list -p PROJECT_ID --priority high --assignee USER_ID
+plane issues list -p PROJECT_ID --state STATE_ID
 
 # Get details
 plane issues get -p PROJECT_ID ISSUE_ID
-
-# Get by short ID (faster, no need to find UUIDs)
-plane issues get-short PROJ-SEQ  # e.g., PROJ-123
+plane issues get-short PROJ-SEQ  # e.g., PROJ-123 (fastest way)
 
 # Create
 plane issues create -p PROJECT_ID --name "Fix login bug" --priority high
@@ -122,6 +121,46 @@ Default output is a formatted table. Add `-f json` for raw JSON:
 ```bash
 plane projects list -f json
 plane issues list -p PROJECT_ID -f json
+```
+
+## Pagination
+
+All list commands support cursor-based pagination. Pagination info is displayed above results:
+
+```bash
+plane projects list
+# Shows:
+# Pagination: total: 50 | pages: 5 | showing: 10
+# Next page: --cursor 10:1:0
+
+# Use cursor to navigate
+plane issues list -p PROJECT_ID --cursor "10:1:0"
+
+# Control page size
+plane issues list -p PROJECT_ID --per-page 20
+```
+
+## Field Selection
+
+```bash
+# Return only specific fields
+plane issues list -p PROJECT_ID --fields "id,name,state"
+
+# Expand related objects
+plane issues list -p PROJECT_ID --expand "assignees,state"
+
+# Sort results
+plane issues list -p PROJECT_ID --order-by "-created_at"
+```
+
+## Getting Help
+
+Every command has detailed help:
+
+```bash
+plane --help
+plane issues --help
+plane issues create --help
 ```
 
 ## Typical Workflow
