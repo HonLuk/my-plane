@@ -120,7 +120,7 @@ def main():
     print(f"  cp {output_path} ~/.local/bin/plane")
     print("  chmod +x ~/.local/bin/plane")
     print("\nOr download directly:")
-    print("  curl -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane")
+    print("  curl -L -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane")
 
 
 if __name__ == "__main__":

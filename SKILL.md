@@ -13,7 +13,7 @@ Interact with [Plane.so](https://plane.so) project management via the `plane` CL
 Download the single executable file:
 
 ```bash
-curl -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane
+curl -L -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane
 chmod +x ~/.local/bin/plane
 ```
 

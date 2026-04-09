@@ -50,7 +50,7 @@ npx clawhub install my-plane
 Download the single executable file:
 
 ```bash
-curl -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane
+curl -L -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane
 chmod +x ~/.local/bin/plane
 ```
 
