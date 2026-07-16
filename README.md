@@ -9,6 +9,7 @@
 - **Projects** — list, get, create
 - **Work Items** — list, get, create, update, assign, delete, search
 - **Comments** — list activity, add comments to work items
+- **Images** — download images embedded in work item descriptions
 - **Cycles** — list, get, create sprints
 - **Modules** — list, get, create feature modules
 - **Members** — list workspace members (for finding assignee IDs)
@@ -34,7 +35,8 @@ scripts/
     ├── modules.py        # modules CRUD
     ├── states.py         # states list
     ├── labels.py         # labels list
-    └── comments.py       # comments list/add
+    ├── comments.py       # comments list/add
+    └── images.py         # image download (get-image, get-images)
 ```
 
 ## Installation
@@ -106,7 +108,7 @@ plane issues list -p PROJECT_ID
 plane issues list -p PROJECT_ID --priority high --state STATE_ID
 
 # Get work item by short ID (fastest way)
-plane issues get-short APP-42
+plane issues get-short PROJ-123
 
 # Get work item by UUID
 plane issues get -p PROJECT_ID ISSUE_UUID
@@ -152,6 +154,15 @@ plane states -p PROJECT_ID
 
 # List labels (for getting label IDs)
 plane labels -p PROJECT_ID
+
+# Download all images from a work item
+plane get-images PROJ-123 ./images/
+
+# Download a single image by asset UUID
+plane get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./screenshot.png
+
+# JSON output (returns downloaded file paths and metadata)
+plane get-images PROJ-123 ./images/ -f json
 
 # JSON output
 plane projects list -f json
@@ -199,6 +210,8 @@ plane cycles --help
 | `plane modules create -p PROJECT_ID --name N` | Create module |
 | `plane states -p PROJECT_ID` | List workflow states |
 | `plane labels -p PROJECT_ID` | List labels |
+| `plane get-images PROJ-SEQ DIR` | Download all images from a work item |
+| `plane get-image PROJ-SEQ UUID FILE` | Download a single image by asset UUID |
 
 ### Filters
 
@@ -246,6 +259,23 @@ plane issues list -p PROJECT_ID --expand "assignees,state"
 # Sort results
 plane issues list -p PROJECT_ID --order-by "-created_at"
 ```
+
+### Image Downloads
+
+Work item descriptions often contain embedded images (screenshots, diagrams, etc.). These are stored as `<image-component src="UUID">` tags in the `description_html` field. Use `get-images` to download all images or `get-image` for a specific one:
+
+```bash
+# Download all images from a work item to a directory
+plane get-images PROJ-123 ./images/
+
+# Download a single image by asset UUID (from description_html)
+plane get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./output.png
+
+# JSON output returns file paths and metadata
+plane get-images PROJ-123 ./images/ -f json
+```
+
+Files are named by asset UUID with the correct extension (e.g., `20745b59-....png`). If no extension is provided in the output path for `get-image`, it is auto-appended based on the image's Content-Type.
 
 ## How It Works
 

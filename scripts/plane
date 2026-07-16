@@ -43,6 +43,7 @@ from commands.cycles import cmd_cycles_list, cmd_cycles_get, cmd_cycles_create
 from commands.modules import cmd_modules_list, cmd_modules_get, cmd_modules_create
 from commands.states import cmd_states_list
 from commands.labels import cmd_labels_list
+from commands.images import cmd_get_image, cmd_get_images
 
 
 # ===========================================================================
@@ -373,6 +374,37 @@ def main():
     labels.add_argument("--project", "-p", required=True, help="Project ID (UUID)")
     _add_pagination_args(labels)
     labels.set_defaults(func=cmd_labels_list)
+
+    # ── get-image ─────────────────────────────────────────────────────
+    gi = subparsers.add_parser(
+        "get-image",
+        help="Download a single image from a work item",
+        description=(
+            "Download a specific image embedded in a work item's description. "
+            "The asset UUID can be found in the <image-component src=\"UUID\"> "
+            "tag of the work item's description_html field."
+        ),
+        parents=[common_parser],
+    )
+    gi.add_argument("issue_short", help="Work item short ID (e.g., 'PROJ-123')")
+    gi.add_argument("asset_id", help="Image asset UUID (from description_html)")
+    gi.add_argument("file", help="Output file path (extension auto-appended if missing)")
+    gi.set_defaults(func=cmd_get_image)
+
+    # ── get-images ────────────────────────────────────────────────────
+    gis = subparsers.add_parser(
+        "get-images",
+        help="Download all images from a work item",
+        description=(
+            "Download every image embedded in a work item's description to a "
+            "directory.  Files are named by their asset UUID with the correct "
+            "extension (e.g., 20745b59-....png)."
+        ),
+        parents=[common_parser],
+    )
+    gis.add_argument("issue_short", help="Work item short ID (e.g., 'PROJ-123')")
+    gis.add_argument("dir", help="Output directory (created if it does not exist)")
+    gis.set_defaults(func=cmd_get_images)
 
     # ── parse & dispatch ────────────────────────────────────────────────
     args = parser.parse_args()

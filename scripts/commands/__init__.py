@@ -13,3 +13,4 @@ from .modules import *
 from .states import *
 from .labels import *
 from .comments import *
+from .images import *

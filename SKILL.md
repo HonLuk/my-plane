@@ -114,6 +114,24 @@ plane states -p PROJECT_ID    # List workflow states (useful for getting state I
 plane labels -p PROJECT_ID    # List labels (useful for getting label IDs)
 ```
 
+### Images
+
+Download images embedded in work item descriptions. Image asset UUIDs are found in the `<image-component src="UUID">` tags of a work item's `description_html` field (visible via `plane issues get-short PROJ-SEQ -f json`).
+
+```bash
+# Download all images from a work item to a directory
+plane get-images PROJ-123 ./images/
+
+# Download a single image by asset UUID
+plane get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./output.png
+
+# JSON output (returns downloaded file paths and metadata)
+plane get-images PROJ-123 ./images/ -f json
+plane get-image PROJ-123 20745b59-... ./output.png -f json
+```
+
+Files are named by asset UUID with the correct extension (e.g., `20745b59-....png`). If no extension is provided in the output path for `get-image`, it is auto-appended based on the image's Content-Type.
+
 ## Output Formats
 
 Default output is a formatted table. Add `-f json` for raw JSON:
@@ -170,3 +188,4 @@ plane issues create --help
 3. `plane members` — find member IDs for assignment
 4. `plane issues create -p PROJECT_ID --name "Task" --priority high --assignee USER_ID`
 5. `plane comments add -p PROJECT_ID -i ISSUE_ID "Started working on this"`
+6. `plane get-images PROJ-123 ./images/` — download all images from a work item

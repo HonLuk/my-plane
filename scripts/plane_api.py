@@ -141,6 +141,71 @@ def api(method: str, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Op
 
 
 # ---------------------------------------------------------------------------
+# Binary asset download
+# ---------------------------------------------------------------------------
+
+def download_binary(endpoint: str, output_path: str) -> Dict[str, Any]:
+    """
+    Download a binary asset from the Plane API and save to a file.
+
+    Uses the same authentication as api() but reads the response as raw
+    binary data instead of JSON.  The attachment endpoint returns a 302
+    redirect to a presigned URL; urlopen follows redirects automatically.
+
+    Args:
+        endpoint:     API path starting with / (e.g., /workspaces/.../attachments/.../).
+        output_path:  File path where the binary data will be saved.
+
+    Returns:
+        Dict with keys: content_type, size, path.
+
+    Raises:
+        SystemExit on HTTP error, connection error, or timeout.
+    """
+    _check_env()
+
+    url = f"{BASE_URL}/api/v1{endpoint}"
+
+    # Defense-in-depth: ensure we only make HTTP(S) requests
+    if not url.startswith(("http://", "https://")):
+        print(_red(f"Invalid URL scheme: {url}"), file=sys.stderr)
+        sys.exit(1)
+
+    headers = {
+        "X-API-Key": API_KEY,
+    }
+
+    req = Request(url, headers=headers, method="GET")
+
+    try:
+        with urlopen(req, timeout=60) as resp:
+            content_type = resp.headers.get("Content-Type", "application/octet-stream")
+            data = resp.read()
+            with open(output_path, "wb") as f:
+                f.write(data)
+            return {
+                "content_type": content_type,
+                "size": len(data),
+                "path": output_path,
+            }
+    except HTTPError as e:
+        error_body = e.read().decode() if e.fp else str(e)
+        try:
+            error_json = json.loads(error_body)
+            error_body = json.dumps(error_json, indent=2)
+        except (json.JSONDecodeError, ValueError):
+            pass
+        print(_red(f"API Error {e.code}:") + f" {error_body}", file=sys.stderr)
+        sys.exit(1)
+    except URLError as e:
+        print(_red(f"Connection error: {e.reason}"), file=sys.stderr)
+        sys.exit(1)
+    except TimeoutError:
+        print(_red("Request timed out (60s). The Plane API may be unreachable."), file=sys.stderr)
+        sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
 # Convenience getters for configuration
 # ---------------------------------------------------------------------------
 

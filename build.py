@@ -38,6 +38,7 @@ INCLUDE_FILES = [
     "commands/states.py",
     "commands/labels.py",
     "commands/comments.py",
+    "commands/images.py",
 ]
 
 
