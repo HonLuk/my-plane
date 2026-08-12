@@ -189,10 +189,13 @@ structure to HTML and use `--description-html`.
 
 ## 7. Complete examples
 
+The commands below assume the skill's `PLANE_CLI` variable has been set as
+described in `SKILL.md`.
+
 Simple Markdown through the CLI:
 
 ```bash
-plane issues create -p PROJECT_ID --name "Improve reporting" \
+"$PLANE_CLI" issues create -p PROJECT_ID --name "Improve reporting" \
   --description '# Summary
 
 Add **a new metric** and verify the `field_name` value.
@@ -204,14 +207,14 @@ Add **a new metric** and verify the `field_name` value.
 Explicit Plane HTML for exact formatting:
 
 ```bash
-plane issues create -p PROJECT_ID --name "Improve reporting" \
+"$PLANE_CLI" issues create -p PROJECT_ID --name "Improve reporting" \
   --description-html '<h2>Requirements</h2><p><strong>New metric</strong> uses the agreed data definition.</p><h2>Acceptance criteria</h2><ul><li><p><span data-text-color="peach" data-background-color="orange">The value is highlighted for review.</span></p></li><li><p>Empty data has a defined result.</p></li></ul>'
 ```
 
 Use the same `--description-html` option when updating an existing work item:
 
 ```bash
-plane issues update -p PROJECT_ID ISSUE_ID \
+"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_ID \
   --description-html '<p><span data-text-color="pink">Updated note</span></p>'
 ```
 
@@ -219,7 +222,7 @@ plane issues update -p PROJECT_ID ISSUE_ID \
 
 - Treat user-provided text as text. Escape `<`, `>`, `&`, and quotes before interpolating it into hand-written HTML.
 - Do not send scripts, event-handler attributes such as `onclick`, or unnecessary inline styles. The API sanitizes content, but sanitization is not a formatting strategy.
-- After a write, inspect `plane issues get -p PROJECT_ID ISSUE_ID -f json` and verify the returned `description_html`.
+- After a write, inspect `"$PLANE_CLI" issues get -p PROJECT_ID ISSUE_ID -f json` and verify the returned `description_html`.
 - If literal `<h2>` or `<span>` appears, check whether the wrong option was used.
 - If a color does not render, verify the attribute name and palette key.
 - Confirm the workspace, project ID, and work item target before writing.

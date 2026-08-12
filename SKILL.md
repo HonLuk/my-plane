@@ -16,10 +16,20 @@ Install this skill together with its bundled CLI:
 npx add-skill https://github.com/HonLuk/my-plane
 ```
 
-The CLI is bundled at `scripts/plane` relative to this skill directory. Run it
-from the skill directory (for example, `scripts/plane me`); no global
-installation or PATH modification is required. The examples below use `plane`
-as shorthand for this relative path.
+The CLI is bundled at `scripts/plane` relative to this `SKILL.md`; it is not
+installed globally. Resolve the directory containing this file and set the
+path before running commands:
+
+```bash
+# Replace this with the actual directory containing this SKILL.md.
+PLANE_CLI="/path/to/my-plane/scripts/plane"
+"$PLANE_CLI" me
+```
+
+Always invoke `"$PLANE_CLI"`; do not assume that a bare `plane` command is on
+the user's `PATH`. In a repository checkout, the generated package path is
+`./skills/scripts/plane`; inside an installed skill directory it is
+`./scripts/plane`.
 
 If Node.js is unavailable, download the release package into the agent's
 `skills/` directory instead:
@@ -72,104 +82,106 @@ the Markdown-to-HTML boundary.
 
 ## Commands
 
+The examples below assume `PLANE_CLI` has been set as shown above.
+
 ### Current User
 
 ```bash
-plane me                      # Show authenticated user info
+"$PLANE_CLI" me                      # Show authenticated user info
 ```
 
 ### Workspace Members
 
 ```bash
-plane members                 # List all workspace members (name, email, role, ID)
+"$PLANE_CLI" members                 # List all workspace members (name, email, role, ID)
 ```
 
 ### Projects
 
 ```bash
-plane projects list                                      # List all projects
-plane projects get PROJECT_ID                            # Get project details
-plane projects create --name "My Project" --identifier "PROJ"  # Create project
+"$PLANE_CLI" projects list                                      # List all projects
+"$PLANE_CLI" projects get PROJECT_ID                            # Get project details
+"$PLANE_CLI" projects create --name "My Project" --identifier "PROJ"  # Create project
 ```
 
 ### Work Items (Issues)
 
 ```bash
 # List work items
-plane issues list -p PROJECT_ID
-plane issues list -p PROJECT_ID --priority high --assignee USER_ID
-plane issues list -p PROJECT_ID --state STATE_ID
+"$PLANE_CLI" issues list -p PROJECT_ID
+"$PLANE_CLI" issues list -p PROJECT_ID --priority high --assignee USER_ID
+"$PLANE_CLI" issues list -p PROJECT_ID --state STATE_ID
 
 # Get details
-plane issues get -p PROJECT_ID ISSUE_ID
-plane issues get-short PROJ-SEQ  # e.g., PROJ-123 (fastest way)
+"$PLANE_CLI" issues get -p PROJECT_ID ISSUE_ID
+"$PLANE_CLI" issues get-short PROJ-SEQ  # e.g., PROJ-123 (fastest way)
 
 # Create
-plane issues create -p PROJECT_ID --name "Fix login bug" --priority high
-plane issues create -p PROJECT_ID --name "Feature" --assignee USER_ID --label LABEL_ID
-plane issues create -p PROJECT_ID --name "Rich feature" \
+"$PLANE_CLI" issues create -p PROJECT_ID --name "Fix login bug" --priority high
+"$PLANE_CLI" issues create -p PROJECT_ID --name "Feature" --assignee USER_ID --label LABEL_ID
+"$PLANE_CLI" issues create -p PROJECT_ID --name "Rich feature" \
   --description-html '<p><strong>Acceptance criteria</strong></p><ul><li>List renders correctly</li></ul>'
 
 # Update
-plane issues update -p PROJECT_ID ISSUE_ID --state STATE_ID --priority medium
-plane issues update -p PROJECT_ID ISSUE_ID \
+"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_ID --state STATE_ID --priority medium
+"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_ID \
   --description-html '<p><span data-text-color="pink">Updated note</span></p>'
 
 # Assign to members
-plane issues assign -p PROJECT_ID ISSUE_ID USER_ID_1 USER_ID_2
+"$PLANE_CLI" issues assign -p PROJECT_ID ISSUE_ID USER_ID_1 USER_ID_2
 
 # Delete
-plane issues delete -p PROJECT_ID ISSUE_ID
+"$PLANE_CLI" issues delete -p PROJECT_ID ISSUE_ID
 
 # Search across workspace
-plane issues search "login bug"
+"$PLANE_CLI" issues search "login bug"
 ```
 
 ### Comments
 
 ```bash
-plane comments list -p PROJECT_ID -i ISSUE_ID            # List comments on a work item
-plane comments list -p PROJECT_ID -i ISSUE_ID --all      # Show all activity (not just comments)
-plane comments add -p PROJECT_ID -i ISSUE_ID "Looks good, merging now"  # Add a comment
+"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID            # List comments on a work item
+"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID --all      # Show all activity (not just comments)
+"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID "Looks good, merging now"  # Add a comment
 ```
 
 ### Cycles (Sprints)
 
 ```bash
-plane cycles list -p PROJECT_ID
-plane cycles get -p PROJECT_ID CYCLE_ID
-plane cycles create -p PROJECT_ID --name "Sprint 1" --start 2026-01-27 --end 2026-02-10
+"$PLANE_CLI" cycles list -p PROJECT_ID
+"$PLANE_CLI" cycles get -p PROJECT_ID CYCLE_ID
+"$PLANE_CLI" cycles create -p PROJECT_ID --name "Sprint 1" --start 2026-01-27 --end 2026-02-10
 ```
 
 ### Modules
 
 ```bash
-plane modules list -p PROJECT_ID
-plane modules get -p PROJECT_ID MODULE_ID
-plane modules create -p PROJECT_ID --name "Auth Module" --description "Authentication features"
+"$PLANE_CLI" modules list -p PROJECT_ID
+"$PLANE_CLI" modules get -p PROJECT_ID MODULE_ID
+"$PLANE_CLI" modules create -p PROJECT_ID --name "Auth Module" --description "Authentication features"
 ```
 
 ### States & Labels
 
 ```bash
-plane states -p PROJECT_ID    # List workflow states (useful for getting state IDs)
-plane labels -p PROJECT_ID    # List labels (useful for getting label IDs)
+"$PLANE_CLI" states -p PROJECT_ID    # List workflow states (useful for getting state IDs)
+"$PLANE_CLI" labels -p PROJECT_ID    # List labels (useful for getting label IDs)
 ```
 
 ### Images
 
-Download images embedded in work item descriptions. Image asset UUIDs are found in the `<image-component src="UUID">` tags of a work item's `description_html` field (visible via `plane issues get-short PROJ-SEQ -f json`).
+Download images embedded in work item descriptions. Image asset UUIDs are found in the `<image-component src="UUID">` tags of a work item's `description_html` field (visible via `"$PLANE_CLI" issues get-short PROJ-SEQ -f json`).
 
 ```bash
 # Download all images from a work item to a directory
-plane get-images PROJ-123 ./images/
+"$PLANE_CLI" get-images PROJ-123 ./images/
 
 # Download a single image by asset UUID
-plane get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./output.png
+"$PLANE_CLI" get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./output.png
 
 # JSON output (returns downloaded file paths and metadata)
-plane get-images PROJ-123 ./images/ -f json
-plane get-image PROJ-123 20745b59-... ./output.png -f json
+"$PLANE_CLI" get-images PROJ-123 ./images/ -f json
+"$PLANE_CLI" get-image PROJ-123 20745b59-... ./output.png -f json
 ```
 
 Files are named by asset UUID with the correct extension (e.g., `20745b59-....png`). If no extension is provided in the output path for `get-image`, it is auto-appended based on the image's Content-Type.
@@ -179,8 +191,8 @@ Files are named by asset UUID with the correct extension (e.g., `20745b59-....pn
 Default output is a formatted table. Add `-f json` for raw JSON:
 
 ```bash
-plane projects list -f json
-plane issues list -p PROJECT_ID -f json
+"$PLANE_CLI" projects list -f json
+"$PLANE_CLI" issues list -p PROJECT_ID -f json
 ```
 
 ## Pagination
@@ -188,29 +200,29 @@ plane issues list -p PROJECT_ID -f json
 All list commands support cursor-based pagination. Pagination info is displayed above results:
 
 ```bash
-plane projects list
+"$PLANE_CLI" projects list
 # Shows:
 # Pagination: total: 50 | pages: 5 | showing: 10
 # Next page: --cursor 10:1:0
 
 # Use cursor to navigate
-plane issues list -p PROJECT_ID --cursor "10:1:0"
+"$PLANE_CLI" issues list -p PROJECT_ID --cursor "10:1:0"
 
 # Control page size
-plane issues list -p PROJECT_ID --per-page 20
+"$PLANE_CLI" issues list -p PROJECT_ID --per-page 20
 ```
 
 ## Field Selection
 
 ```bash
 # Return only specific fields
-plane issues list -p PROJECT_ID --fields "id,name,state"
+"$PLANE_CLI" issues list -p PROJECT_ID --fields "id,name,state"
 
 # Expand related objects
-plane issues list -p PROJECT_ID --expand "assignees,state"
+"$PLANE_CLI" issues list -p PROJECT_ID --expand "assignees,state"
 
 # Sort results
-plane issues list -p PROJECT_ID --order-by "-created_at"
+"$PLANE_CLI" issues list -p PROJECT_ID --order-by "-created_at"
 ```
 
 ## Getting Help
@@ -218,16 +230,16 @@ plane issues list -p PROJECT_ID --order-by "-created_at"
 Every command has detailed help:
 
 ```bash
-plane --help
-plane issues --help
-plane issues create --help
+"$PLANE_CLI" --help
+"$PLANE_CLI" issues --help
+"$PLANE_CLI" issues create --help
 ```
 
 ## Typical Workflow
 
-1. `plane projects list` — find your project ID
-2. `plane states -p PROJECT_ID` — see available states
-3. `plane members` — find member IDs for assignment
-4. `plane issues create -p PROJECT_ID --name "Task" --priority high --assignee USER_ID`
-5. `plane comments add -p PROJECT_ID -i ISSUE_ID "Started working on this"`
-6. `plane get-images PROJ-123 ./images/` — download all images from a work item
+1. `"$PLANE_CLI" projects list` — find your project ID
+2. `"$PLANE_CLI" states -p PROJECT_ID` — see available states
+3. `"$PLANE_CLI" members` — find member IDs for assignment
+4. `"$PLANE_CLI" issues create -p PROJECT_ID --name "Task" --priority high --assignee USER_ID`
+5. `"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID "Started working on this"`
+6. `"$PLANE_CLI" get-images PROJ-123 ./images/` — download all images from a work item

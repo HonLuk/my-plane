@@ -137,95 +137,106 @@ supports pasting common Markdown/GFM content.
 
 ## Usage
 
-The examples below use `plane` as the CLI name. In a source checkout, invoke
-`./skills/scripts/plane`; inside an installed skill, invoke `scripts/plane`.
+The examples below use `PLANE_CLI` so they do not depend on a global `PATH`
+entry. Set it once from the directory that contains the installed skill:
+
+```bash
+# From the repository root after building the package:
+PLANE_CLI="./skills/scripts/plane"
+
+# From inside an installed skill directory, use instead:
+# PLANE_CLI="./scripts/plane"
+```
+
+Invoke commands as `"$PLANE_CLI" ...`; the skill does not assume that a bare
+`plane` command is available.
 
 ```bash
 # Who am I?
-plane me
+"$PLANE_CLI" me
 
 # List workspace members
-plane members
+"$PLANE_CLI" members
 
 # List all projects
-plane projects list
+"$PLANE_CLI" projects list
 
 # Get project details
-plane projects get PROJECT_ID
+"$PLANE_CLI" projects get PROJECT_ID
 
 # Create a new project
-plane projects create --name "My App" --identifier "APP"
+"$PLANE_CLI" projects create --name "My App" --identifier "APP"
 
 # List work items in a project
-plane issues list -p PROJECT_ID
+"$PLANE_CLI" issues list -p PROJECT_ID
 
 # Filter work items
-plane issues list -p PROJECT_ID --priority high --state STATE_ID
+"$PLANE_CLI" issues list -p PROJECT_ID --priority high --state STATE_ID
 
 # Get work item by short ID (fastest way)
-plane issues get-short PROJ-123
+"$PLANE_CLI" issues get-short PROJ-123
 
 # Get work item by UUID
-plane issues get -p PROJECT_ID ISSUE_UUID
+"$PLANE_CLI" issues get -p PROJECT_ID ISSUE_UUID
 
 # Create a work item
-plane issues create -p PROJECT_ID --name "Fix login bug" --priority high
-plane issues create -p PROJECT_ID --name "Rich feature" \
+"$PLANE_CLI" issues create -p PROJECT_ID --name "Fix login bug" --priority high
+"$PLANE_CLI" issues create -p PROJECT_ID --name "Rich feature" \
   --description-html '<p><strong>Acceptance criteria</strong></p><ul><li>List renders correctly</li></ul>'
 
 # Update a work item
-plane issues update -p PROJECT_ID ISSUE_UUID --state STATE_ID --priority medium
-plane issues update -p PROJECT_ID ISSUE_UUID \
+"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_UUID --state STATE_ID --priority medium
+"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_UUID \
   --description-html '<p><span data-text-color="pink">Updated note</span></p>'
 
 # Assign to members
-plane issues assign -p PROJECT_ID ISSUE_UUID USER_ID1 USER_ID2
+"$PLANE_CLI" issues assign -p PROJECT_ID ISSUE_UUID USER_ID1 USER_ID2
 
 # Delete a work item
-plane issues delete -p PROJECT_ID ISSUE_UUID
+"$PLANE_CLI" issues delete -p PROJECT_ID ISSUE_UUID
 
 # Search across workspace
-plane issues search "login bug"
+"$PLANE_CLI" issues search "login bug"
 
 # Add a comment
-plane comments add -p PROJECT_ID -i ISSUE_UUID "Working on this now"
+"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_UUID "Working on this now"
 
 # List comments
-plane comments list -p PROJECT_ID -i ISSUE_UUID
+"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_UUID
 
 # List all activity (including field changes)
-plane comments list -p PROJECT_ID -i ISSUE_UUID --all
+"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_UUID --all
 
 # List cycles
-plane cycles list -p PROJECT_ID
+"$PLANE_CLI" cycles list -p PROJECT_ID
 
 # Create a cycle
-plane cycles create -p PROJECT_ID --name "Sprint 1" --start 2026-01-27 --end 2026-02-10
+"$PLANE_CLI" cycles create -p PROJECT_ID --name "Sprint 1" --start 2026-01-27 --end 2026-02-10
 
 # List modules
-plane modules list -p PROJECT_ID
+"$PLANE_CLI" modules list -p PROJECT_ID
 
 # Create a module
-plane modules create -p PROJECT_ID --name "Auth Module" --description "Authentication features"
+"$PLANE_CLI" modules create -p PROJECT_ID --name "Auth Module" --description "Authentication features"
 
 # List workflow states (for getting state IDs)
-plane states -p PROJECT_ID
+"$PLANE_CLI" states -p PROJECT_ID
 
 # List labels (for getting label IDs)
-plane labels -p PROJECT_ID
+"$PLANE_CLI" labels -p PROJECT_ID
 
 # Download all images from a work item
-plane get-images PROJ-123 ./images/
+"$PLANE_CLI" get-images PROJ-123 ./images/
 
 # Download a single image by asset UUID
-plane get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./screenshot.png
+"$PLANE_CLI" get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./screenshot.png
 
 # JSON output (returns downloaded file paths and metadata)
-plane get-images PROJ-123 ./images/ -f json
+"$PLANE_CLI" get-images PROJ-123 ./images/ -f json
 
 # JSON output
-plane projects list -f json
-plane issues list -p PROJECT_ID -f json
+"$PLANE_CLI" projects list -f json
+"$PLANE_CLI" issues list -p PROJECT_ID -f json
 ```
 
 ### Getting Help
@@ -233,53 +244,53 @@ plane issues list -p PROJECT_ID -f json
 Every command has detailed help available:
 
 ```bash
-plane --help
-plane issues --help
-plane issues create --help
-plane cycles --help
+"$PLANE_CLI" --help
+"$PLANE_CLI" issues --help
+"$PLANE_CLI" issues create --help
+"$PLANE_CLI" cycles --help
 ```
 
 ### All Commands
 
 | Command | Description |
 |---|---|
-| `plane me` | Show current user info |
-| `plane members` | List workspace members |
-| `plane projects list` | List all projects |
-| `plane projects get PROJECT_ID` | Get project details |
-| `plane projects create --name N --identifier I` | Create project |
-| `plane issues list -p PROJECT_ID` | List work items |
-| `plane issues list -p PROJECT_ID --priority high` | Filter by priority |
-| `plane issues list -p PROJECT_ID --state STATE_ID` | Filter by state |
-| `plane issues get -p PROJECT_ID ISSUE_ID` | Get work item by UUID |
-| `plane issues get-short PROJECT-SEQ` | Get work item by short ID (e.g., PROJ-SEQ) |
-| `plane issues create -p PROJECT_ID --name N` | Create work item |
-| `plane issues update -p PROJECT_ID ISSUE_ID [--fields]` | Update work item |
-| `plane issues assign -p PROJECT_ID ISSUE_ID USER_ID...` | Assign work item |
-| `plane issues delete -p PROJECT_ID ISSUE_ID` | Delete work item |
-| `plane issues search QUERY` | Search work items |
-| `plane comments list -p PROJECT_ID -i ISSUE_ID` | List comments/activity |
-| `plane comments list -p PROJECT_ID -i ISSUE_ID --all` | Show all activity |
-| `plane comments add -p PROJECT_ID -i ISSUE_ID "text"` | Add comment |
-| `plane cycles list -p PROJECT_ID` | List cycles |
-| `plane cycles get -p PROJECT_ID CYCLE_ID` | Get cycle details |
-| `plane cycles create -p PROJECT_ID --name N` | Create cycle |
-| `plane modules list -p PROJECT_ID` | List modules |
-| `plane modules get -p PROJECT_ID MODULE_ID` | Get module details |
-| `plane modules create -p PROJECT_ID --name N` | Create module |
-| `plane states -p PROJECT_ID` | List workflow states |
-| `plane labels -p PROJECT_ID` | List labels |
-| `plane get-images PROJ-SEQ DIR` | Download all images from a work item |
-| `plane get-image PROJ-SEQ UUID FILE` | Download a single image by asset UUID |
+| `"$PLANE_CLI" me` | Show current user info |
+| `"$PLANE_CLI" members` | List workspace members |
+| `"$PLANE_CLI" projects list` | List all projects |
+| `"$PLANE_CLI" projects get PROJECT_ID` | Get project details |
+| `"$PLANE_CLI" projects create --name N --identifier I` | Create project |
+| `"$PLANE_CLI" issues list -p PROJECT_ID` | List work items |
+| `"$PLANE_CLI" issues list -p PROJECT_ID --priority high` | Filter by priority |
+| `"$PLANE_CLI" issues list -p PROJECT_ID --state STATE_ID` | Filter by state |
+| `"$PLANE_CLI" issues get -p PROJECT_ID ISSUE_ID` | Get work item by UUID |
+| `"$PLANE_CLI" issues get-short PROJECT-SEQ` | Get work item by short ID (e.g., PROJ-SEQ) |
+| `"$PLANE_CLI" issues create -p PROJECT_ID --name N` | Create work item |
+| `"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_ID [--fields]` | Update work item |
+| `"$PLANE_CLI" issues assign -p PROJECT_ID ISSUE_ID USER_ID...` | Assign work item |
+| `"$PLANE_CLI" issues delete -p PROJECT_ID ISSUE_ID` | Delete work item |
+| `"$PLANE_CLI" issues search QUERY` | Search work items |
+| `"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID` | List comments/activity |
+| `"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID --all` | Show all activity |
+| `"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID "text"` | Add comment |
+| `"$PLANE_CLI" cycles list -p PROJECT_ID` | List cycles |
+| `"$PLANE_CLI" cycles get -p PROJECT_ID CYCLE_ID` | Get cycle details |
+| `"$PLANE_CLI" cycles create -p PROJECT_ID --name N` | Create cycle |
+| `"$PLANE_CLI" modules list -p PROJECT_ID` | List modules |
+| `"$PLANE_CLI" modules get -p PROJECT_ID MODULE_ID` | Get module details |
+| `"$PLANE_CLI" modules create -p PROJECT_ID --name N` | Create module |
+| `"$PLANE_CLI" states -p PROJECT_ID` | List workflow states |
+| `"$PLANE_CLI" labels -p PROJECT_ID` | List labels |
+| `"$PLANE_CLI" get-images PROJ-SEQ DIR` | Download all images from a work item |
+| `"$PLANE_CLI" get-image PROJ-SEQ UUID FILE` | Download a single image by asset UUID |
 
 ### Filters
 
 Work item listing supports filters:
 
 ```bash
-plane issues list -p PROJECT_ID --state STATE_ID
-plane issues list -p PROJECT_ID --priority high
-plane issues list -p PROJECT_ID --assignee USER_ID
+"$PLANE_CLI" issues list -p PROJECT_ID --state STATE_ID
+"$PLANE_CLI" issues list -p PROJECT_ID --priority high
+"$PLANE_CLI" issues list -p PROJECT_ID --assignee USER_ID
 ```
 
 ### Pagination
@@ -288,13 +299,13 @@ All list commands support cursor-based pagination:
 
 ```bash
 # Basic list (shows pagination info)
-plane projects list
+"$PLANE_CLI" projects list
 
 # Specify page size
-plane issues list -p PROJECT_ID --per-page 20
+"$PLANE_CLI" issues list -p PROJECT_ID --per-page 20
 
 # Navigate pages using cursor (displayed in output)
-plane issues list -p PROJECT_ID --cursor "5:1:0"
+"$PLANE_CLI" issues list -p PROJECT_ID --cursor "5:1:0"
 ```
 
 Pagination info is displayed above the results:
@@ -310,13 +321,13 @@ Control which fields are returned and expand related objects:
 
 ```bash
 # Return only specific fields
-plane issues list -p PROJECT_ID --fields "id,name,state"
+"$PLANE_CLI" issues list -p PROJECT_ID --fields "id,name,state"
 
 # Expand related objects (assignees, state, labels, etc.)
-plane issues list -p PROJECT_ID --expand "assignees,state"
+"$PLANE_CLI" issues list -p PROJECT_ID --expand "assignees,state"
 
 # Sort results
-plane issues list -p PROJECT_ID --order-by "-created_at"
+"$PLANE_CLI" issues list -p PROJECT_ID --order-by "-created_at"
 ```
 
 ### Image Downloads
@@ -325,13 +336,13 @@ Work item descriptions often contain embedded images (screenshots, diagrams, etc
 
 ```bash
 # Download all images from a work item to a directory
-plane get-images PROJ-123 ./images/
+"$PLANE_CLI" get-images PROJ-123 ./images/
 
 # Download a single image by asset UUID (from description_html)
-plane get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./output.png
+"$PLANE_CLI" get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./output.png
 
 # JSON output returns file paths and metadata
-plane get-images PROJ-123 ./images/ -f json
+"$PLANE_CLI" get-images PROJ-123 ./images/ -f json
 ```
 
 Files are named by asset UUID with the correct extension (e.g., `20745b59-....png`). If no extension is provided in the output path for `get-image`, it is auto-appended based on the image's Content-Type.
