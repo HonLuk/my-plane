@@ -45,9 +45,6 @@ jobs:
       with:
         name: Release ${{ steps.version.outputs.VERSION }}
         files: |
-          skills/SKILL.md
-          skills/references/work-item-description.md
-          skills/scripts/plane
           release/my-plane-skill.zip
         body: |
           ## Plane CLI ${{ steps.version.outputs.VERSION }}
