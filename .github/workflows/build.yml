@@ -53,13 +53,13 @@ jobs:
 
           ### Installation
           ```bash
-          npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill.zip -g -y
+          npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill.zip
           ```
 
           If the download fails because of a network error, retry with the
           GitHub proxy URL:
           ```bash
-          npx skills add https://gh-proxy.com/https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill.zip -g -y
+          npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill.zip
           ```
 
           If Node.js is unavailable, download and extract the release package:

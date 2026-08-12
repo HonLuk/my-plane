@@ -13,19 +13,17 @@ Interact with [Plane.so](https://plane.so) project management via the `plane` CL
 Install this skill together with its bundled CLI:
 
 ```bash
-npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip -g -y
+npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
 ```
 
 Install from the release archive so the installer receives the built
-single-file CLI instead of the repository source tree. The `-g` flag installs
-the skill in the user's global skill directory and `-y` skips the confirmation
-prompt.
+single-file CLI instead of the repository source tree.
 
 If the direct download fails because of a network error, retry with the
-[GitHub proxy URL](https://gh-proxy.com/https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip):
+[GitHub proxy URL](https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip):
 
 ```bash
-npx skills add https://gh-proxy.com/https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip -g -y
+npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
 ```
 
 The CLI is bundled at `scripts/plane` relative to this `SKILL.md`. Resolve the
