@@ -53,35 +53,36 @@ skills/
 ## Requirements
 
 - **Python 3.8 or newer** — required to run the bundled CLI and build the zipapp. The CLI uses only Python's standard library; no `pip` installation is needed.
-- **Node.js with `npx`** — optional; only required when installing through `npx add-skill`.
+- **Node.js with `npx`** — optional; only required when installing through `npx skills add`.
 
 ## Installation
 
-### Via `npx add-skill` (recommended)
+### Via `npx skills add` (recommended)
 
 Install the skill and its bundled CLI from the GitHub repository:
 
 ```bash
-npx add-skill https://github.com/HonLuk/my-plane
+npx skills add https://github.com/HonLuk/my-plane
 ```
 
-`add-skill` installs the repository's root `SKILL.md` together with the
+`skills add` installs the repository's root `SKILL.md` together with the
 bundled `scripts/plane` CLI and `references/` documentation. No global
 `plane` binary or PATH modification is required.
 
 ### Via Release Download (no Node.js required)
 
-If Node.js is unavailable, download and extract the skill package directly:
+If Node.js is unavailable, download and extract the skill package into the
+agent's skills directory at `~/.agents/skills`:
 
 ```bash
-mkdir -p skills
+mkdir -p ~/.agents/skills/my-plane
 curl -L -o /tmp/my-plane-skill.zip https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
-unzip -o /tmp/my-plane-skill.zip -d skills
-chmod +x skills/scripts/plane
+unzip -o /tmp/my-plane-skill.zip -d ~/.agents/skills/my-plane
+chmod +x ~/.agents/skills/my-plane/scripts/plane
 ```
 
-This installs `skills/SKILL.md`, the `references/` documentation, and
-`skills/scripts/plane` without Node.js.
+This installs `~/.agents/skills/my-plane/SKILL.md`, the `references/`
+documentation, and `~/.agents/skills/my-plane/scripts/plane` without Node.js.
 Python 3.8+ is still required to run the bundled CLI.
 
 ### Build from Source
