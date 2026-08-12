@@ -39,33 +39,62 @@ scripts/
     └── images.py         # image download (get-image, get-images)
 ```
 
+The installable Agent Skill is built into the following package layout:
+
+```
+skills/
+├── SKILL.md              # Skill instructions and metadata
+├── references/
+│   └── work-item-description.md  # Detailed body formatting rules
+└── scripts/
+    └── plane             # Bundled executable CLI
+```
+
+## Requirements
+
+- **Python 3.8 or newer** — required to run the bundled CLI and build the zipapp. The CLI uses only Python's standard library; no `pip` installation is needed.
+- **Node.js with `npx`** — optional; only required when installing through `npx add-skill`.
+
 ## Installation
 
-### Via ClawHub (recommended)
+### Via `npx add-skill` (recommended)
+
+Install the skill and its bundled CLI from the GitHub repository:
 
 ```bash
-npx clawhub install my-plane
+npx add-skill https://github.com/HonLuk/my-plane
 ```
 
-### Manual Download
+`add-skill` installs the repository's root `SKILL.md` together with the
+bundled `scripts/plane` CLI and `references/` documentation. No global
+`plane` binary or PATH modification is required.
 
-Download the single executable file:
+### Via Release Download (no Node.js required)
+
+If Node.js is unavailable, download and extract the skill package directly:
 
 ```bash
-curl -L -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane
-chmod +x ~/.local/bin/plane
+mkdir -p skills
+curl -L -o /tmp/my-plane-skill.zip https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
+unzip -o /tmp/my-plane-skill.zip -d skills
+chmod +x skills/scripts/plane
 ```
 
-Make sure `~/.local/bin` is in your PATH.
+This installs `skills/SKILL.md`, the `references/` documentation, and
+`skills/scripts/plane` without Node.js.
+Python 3.8+ is still required to run the bundled CLI.
 
 ### Build from Source
 
 ```bash
 git clone https://github.com/HonLuk/my-plane.git
 cd my-plane
-python build.py
-cp dist/plane ~/.local/bin/plane
+python3 build.py
+./skills/scripts/plane --help
 ```
+
+The build output is always written to `skills/SKILL.md`,
+`skills/references/work-item-description.md`, and `skills/scripts/plane`.
 
 ## Setup
 
@@ -83,7 +112,33 @@ export PLANE_WORKSPACE="your-workspace-slug"
 
 Optionally, set `PLANE_BASE_URL` if you're self-hosting Plane (default: `https://api.plane.so`).
 
+### Agent-Assisted Configuration
+
+If `PLANE_API_KEY` or `PLANE_WORKSPACE` is missing, the Agent should pause
+before making API calls and ask the user for the missing values:
+
+1. Ask for the Plane personal access token. Treat it as a secret and never echo or log it.
+2. Ask for the workspace slug, taken from the Plane URL (for example, `my-team`).
+3. If the user uses a self-hosted Plane instance, ask for `PLANE_BASE_URL` too.
+4. Export the values for the current session, then retry the requested command.
+
+Do not write credentials to the repository or modify a shell profile without
+the user's explicit permission.
+
+### Work Item Description Format
+
+Detailed body formatting rules are maintained in
+[`references/work-item-description.md`](references/work-item-description.md)
+and included in the installable skill. In short, use `--description` only for
+plain text or simple Markdown and `--description-html` for exact Plane editor
+HTML. Complex Markdown may convert incompletely and produces a warning; use
+`--description-html` when exact formatting is required. The web editor also
+supports pasting common Markdown/GFM content.
+
 ## Usage
+
+The examples below use `plane` as the CLI name. In a source checkout, invoke
+`./skills/scripts/plane`; inside an installed skill, invoke `scripts/plane`.
 
 ```bash
 # Who am I?
@@ -115,9 +170,13 @@ plane issues get -p PROJECT_ID ISSUE_UUID
 
 # Create a work item
 plane issues create -p PROJECT_ID --name "Fix login bug" --priority high
+plane issues create -p PROJECT_ID --name "Rich feature" \
+  --description-html '<p><strong>Acceptance criteria</strong></p><ul><li>List renders correctly</li></ul>'
 
 # Update a work item
 plane issues update -p PROJECT_ID ISSUE_UUID --state STATE_ID --priority medium
+plane issues update -p PROJECT_ID ISSUE_UUID \
+  --description-html '<p><span data-text-color="pink">Updated note</span></p>'
 
 # Assign to members
 plane issues assign -p PROJECT_ID ISSUE_UUID USER_ID1 USER_ID2
@@ -279,7 +338,9 @@ Files are named by asset UUID with the correct extension (e.g., `20745b59-....pn
 
 ## How It Works
 
-The CLI is a single Python script (`scripts/plane`) that wraps the [Plane.so REST API v1](https://developers.plane.so/). It uses only Python standard library modules (`urllib`, `json`, `argparse`) — no pip installs needed.
+The source CLI is `scripts/plane`, and `build.py` packages it as
+`skills/scripts/plane` beside `skills/SKILL.md`. It wraps the [Plane.so REST API v1](https://developers.plane.so/)
+using only Python standard library modules (`urllib`, `json`, `argparse`) — no pip installs needed.
 
 ## Acknowledgments
 

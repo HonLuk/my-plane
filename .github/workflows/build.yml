@@ -21,6 +21,21 @@ jobs:
     - name: Build zipapp
       run: python build.py
 
+    - name: Validate skill package
+      run: |
+        python -m compileall -q scripts
+        python -m py_compile build.py
+        test -f skills/SKILL.md
+        test -f skills/references/work-item-description.md
+        test -x skills/scripts/plane
+        skills/scripts/plane --help
+
+    - name: Package skill release
+      run: |
+        mkdir -p release
+        cd skills
+        zip -r ../release/my-plane-skill.zip SKILL.md references scripts/plane
+
     - name: Get version from tag
       id: version
       run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
@@ -29,16 +44,27 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         name: Release ${{ steps.version.outputs.VERSION }}
-        files: dist/plane
+        files: |
+          skills/SKILL.md
+          skills/references/work-item-description.md
+          skills/scripts/plane
+          release/my-plane-skill.zip
         body: |
           ## Plane CLI ${{ steps.version.outputs.VERSION }}
 
-          Single executable file for managing Plane.so projects.
+          Installable Agent Skill for managing Plane.so projects.
 
           ### Installation
           ```bash
-          curl -L -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/plane
-          chmod +x ~/.local/bin/plane
+          npx add-skill https://github.com/HonLuk/my-plane
+          ```
+
+          If Node.js is unavailable, download and extract the release package:
+          ```bash
+          mkdir -p skills
+          curl -L -o /tmp/my-plane-skill.zip https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill.zip
+          unzip -o /tmp/my-plane-skill.zip -d skills
+          chmod +x skills/scripts/plane
           ```
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

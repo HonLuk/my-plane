@@ -1,7 +1,7 @@
 ---
 name: my-plane
 description: "Manage Plane.so projects and work items using the `plane` CLI. List projects, create/update/search issues, manage cycles and modules, add comments, and assign members."
-metadata: {"moltbot":{"requires":{"bins":["plane"],"env":["PLANE_API_KEY","PLANE_WORKSPACE"]},"primaryEnv":"PLANE_API_KEY","emoji":"✈️","homepage":"https://github.com/HonLuk/my-plane","install":[{"id":"github","kind":"download","url":"https://github.com/HonLuk/my-plane/releases/latest/download/plane","targetDir":"~/.local/bin/","bins":["plane"],"label":"Download plane CLI from GitHub"}]}}
+metadata: {"moltbot":{"requires":{"env":["PLANE_API_KEY","PLANE_WORKSPACE"]},"primaryEnv":"PLANE_API_KEY","emoji":"✈️","homepage":"https://github.com/HonLuk/my-plane"}}
 ---
 
 # Plane Skill
@@ -10,14 +10,29 @@ Interact with [Plane.so](https://plane.so) project management via the `plane` CL
 
 ## Installation
 
-Download the single executable file:
+Install this skill together with its bundled CLI:
 
 ```bash
-curl -L -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane
-chmod +x ~/.local/bin/plane
+npx add-skill https://github.com/HonLuk/my-plane
 ```
 
-Make sure `~/.local/bin` is in your PATH.
+The CLI is bundled at `scripts/plane` relative to this skill directory. Run it
+from the skill directory (for example, `scripts/plane me`); no global
+installation or PATH modification is required. The examples below use `plane`
+as shorthand for this relative path.
+
+If Node.js is unavailable, download the release package into the agent's
+`skills/` directory instead:
+
+```bash
+mkdir -p skills
+curl -L -o /tmp/my-plane-skill.zip https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
+unzip -o /tmp/my-plane-skill.zip -d skills
+chmod +x skills/scripts/plane
+```
+
+The bundled CLI still requires Python 3.8 or newer, but this installation path
+does not require Node.js.
 
 ## Setup
 
@@ -31,6 +46,29 @@ export PLANE_BASE_URL="https://api.plane.so"
 Get your API key from: **Plane → Profile Settings → Personal Access Tokens**
 
 The workspace slug is the URL path segment (e.g., for `https://app.plane.so/my-team/` the slug is `my-team`).
+
+## Agent-Assisted Configuration
+
+Before running a command that calls the API, check `PLANE_API_KEY` and
+`PLANE_WORKSPACE`. If either is missing, ask the user for it instead of
+guessing. Ask for `PLANE_BASE_URL` only when the user is self-hosting Plane.
+
+- Treat the API key as a secret: do not echo, log, commit, or place it in skill files.
+- After the user confirms the values, export them for the current session and retry the command.
+- Do not modify shell startup files or persist credentials unless the user explicitly requests it.
+
+## Work Item Descriptions
+
+Before creating or updating a formatted work item, read
+`references/work-item-description.md`. It defines the HTML structure, text
+marks, font/display limitations, Plane color and background attributes, and
+the Markdown-to-HTML boundary.
+
+- Use `--description` for plain text or simple Markdown; complex Markdown may
+  be converted incompletely and will produce a warning.
+- Use `--description-html` for exact Plane editor HTML, colors, backgrounds, or
+  complex Markdown converted to HTML.
+- Verify the target workspace and project before writing.
 
 ## Commands
 
@@ -69,9 +107,13 @@ plane issues get-short PROJ-SEQ  # e.g., PROJ-123 (fastest way)
 # Create
 plane issues create -p PROJECT_ID --name "Fix login bug" --priority high
 plane issues create -p PROJECT_ID --name "Feature" --assignee USER_ID --label LABEL_ID
+plane issues create -p PROJECT_ID --name "Rich feature" \
+  --description-html '<p><strong>Acceptance criteria</strong></p><ul><li>List renders correctly</li></ul>'
 
 # Update
 plane issues update -p PROJECT_ID ISSUE_ID --state STATE_ID --priority medium
+plane issues update -p PROJECT_ID ISSUE_ID \
+  --description-html '<p><span data-text-color="pink">Updated note</span></p>'
 
 # Assign to members
 plane issues assign -p PROJECT_ID ISSUE_ID USER_ID_1 USER_ID_2

@@ -8,10 +8,11 @@ Usage:
     python build.py
 
 Output:
-    dist/plane.pyz - Single executable file
+    skills/SKILL.md                         - Installable skill instructions
+    skills/references/work-item-description.md - Detailed body format reference
+    skills/scripts/plane                    - Bundled executable CLI
 """
 
-import os
 import sys
 import shutil
 import subprocess
@@ -20,8 +21,18 @@ from pathlib import Path
 # Directories
 ROOT_DIR = Path(__file__).parent
 SCRIPTS_DIR = ROOT_DIR / "scripts"
-DIST_DIR = ROOT_DIR / "dist"
 BUILD_DIR = ROOT_DIR / "build"
+LEGACY_DIST_DIR = ROOT_DIR / "dist"
+SKILLS_DIR = ROOT_DIR / "skills"
+SKILL_SOURCE = ROOT_DIR / "SKILL.md"
+SKILL_OUTPUT = SKILLS_DIR / "SKILL.md"
+REFERENCES_SOURCE = ROOT_DIR / "references"
+REFERENCES_OUTPUT = SKILLS_DIR / "references"
+CLI_OUTPUT = SKILLS_DIR / "scripts" / "plane"
+
+REFERENCE_FILES = [
+    "work-item-description.md",
+]
 
 # Files to include (relative to scripts/)
 INCLUDE_FILES = [
@@ -44,11 +55,44 @@ INCLUDE_FILES = [
 
 def clean():
     """Remove build artifacts."""
-    if DIST_DIR.exists():
-        shutil.rmtree(DIST_DIR)
+    # Remove the old dist/ location so stale binaries cannot be mistaken for
+    # the skill package output.
+    if LEGACY_DIST_DIR.exists():
+        shutil.rmtree(LEGACY_DIST_DIR)
     if BUILD_DIR.exists():
         shutil.rmtree(BUILD_DIR)
+    if SKILL_OUTPUT.exists():
+        SKILL_OUTPUT.unlink()
+    for rel_path in REFERENCE_FILES:
+        reference_output = REFERENCES_OUTPUT / rel_path
+        if reference_output.exists():
+            reference_output.unlink()
+    if CLI_OUTPUT.exists():
+        CLI_OUTPUT.unlink()
     print("✓ Cleaned build artifacts")
+
+
+def prepare_skill_package():
+    """Create the installable skill directory and copy its instructions."""
+    if not SKILL_SOURCE.exists():
+        print(f"Error: missing skill source: {SKILL_SOURCE}")
+        sys.exit(1)
+
+    SKILL_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(SKILL_SOURCE, SKILL_OUTPUT)
+    print(f"✓ Copied skill instructions to {SKILL_OUTPUT}")
+
+    for rel_path in REFERENCE_FILES:
+        reference_source = REFERENCES_SOURCE / rel_path
+        reference_output = REFERENCES_OUTPUT / rel_path
+        if not reference_source.is_file():
+            print(f"Error: missing skill reference: {reference_source}")
+            sys.exit(1)
+
+        reference_output.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(reference_source, reference_output)
+
+    print(f"✓ Copied {len(REFERENCE_FILES)} skill reference(s) to {REFERENCES_OUTPUT}")
 
 
 def build_zipapp():
@@ -72,11 +116,12 @@ def build_zipapp():
 
     print(f"✓ Copied {len(INCLUDE_FILES)} files to build/")
 
-    # Create dist directory
-    DIST_DIR.mkdir(parents=True, exist_ok=True)
+    # Place the executable beside SKILL.md so the release archive preserves
+    # the relative scripts/plane path when installing the skill.
+    CLI_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 
     # Build zipapp
-    output_path = DIST_DIR / "plane"
+    output_path = CLI_OUTPUT
 
     # Use Python's zipapp module
     result = subprocess.run(
@@ -113,15 +158,17 @@ def main():
     clean()
     print()
 
+    # Prepare the directory consumed by add-skill.
+    prepare_skill_package()
+    print()
+
     # Build zipapp
     output_path = build_zipapp()
 
     print(f"\n✅ Success! Output: {output_path}")
-    print("\nTo install:")
-    print(f"  cp {output_path} ~/.local/bin/plane")
-    print("  chmod +x ~/.local/bin/plane")
-    print("\nOr download directly:")
-    print("  curl -L -o ~/.local/bin/plane https://github.com/HonLuk/my-plane/releases/latest/download/plane")
+    print(f"Skill package: {SKILLS_DIR}")
+    print("\nRun locally:")
+    print(f"  {output_path} --help")
 
 
 if __name__ == "__main__":

@@ -176,7 +176,15 @@ def main():
     )
     i_create.add_argument("--project", "-p", required=True, help="Project ID (UUID)")
     i_create.add_argument("--name", required=True, help="Work item title")
-    i_create.add_argument("--description", help="Plain-text description (converted to HTML)")
+    i_create_description = i_create.add_mutually_exclusive_group()
+    i_create_description.add_argument(
+        "--description",
+        help="Plain text or simple Markdown (complex Markdown may be incomplete)",
+    )
+    i_create_description.add_argument(
+        "--description-html",
+        help="Plane editor HTML (for rich text, lists, links, and data-* marks)",
+    )
     i_create.add_argument("--priority", choices=["urgent", "high", "medium", "low", "none"],
                           help="Priority level")
     i_create.add_argument("--state", help="State ID")
@@ -193,7 +201,15 @@ def main():
     i_update.add_argument("--project", "-p", required=True, help="Project ID (UUID)")
     i_update.add_argument("issue", help="Work item ID (UUID)")
     i_update.add_argument("--name", help="New title")
-    i_update.add_argument("--description", help="New description")
+    i_update_description = i_update.add_mutually_exclusive_group()
+    i_update_description.add_argument(
+        "--description",
+        help="New plain text or simple Markdown (complex Markdown may be incomplete)",
+    )
+    i_update_description.add_argument(
+        "--description-html",
+        help="New Plane editor HTML (for rich text and data-* marks)",
+    )
     i_update.add_argument("--priority", choices=["urgent", "high", "medium", "low", "none"],
                           help="New priority level")
     i_update.add_argument("--state", help="New state ID")
