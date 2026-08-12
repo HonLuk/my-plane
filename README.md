@@ -59,15 +59,22 @@ skills/
 
 ### Via `npx skills add` (recommended)
 
-Install the skill and its bundled CLI from the GitHub repository:
+Install the prebuilt skill archive and its bundled CLI:
 
 ```bash
-npx skills add https://github.com/HonLuk/my-plane
+npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip -g -y
 ```
 
-`skills add` installs the repository's root `SKILL.md` together with the
-bundled `scripts/plane` CLI and `references/` documentation. No global
-`plane` binary or PATH modification is required.
+The archive contains `SKILL.md`, `references/`, and the single-file
+`scripts/plane` CLI. Installing the archive avoids pulling the repository's
+source tree and does not require a global `plane` binary or PATH modification.
+
+If the download fails because of a network error, retry with the [GitHub proxy
+URL](https://gh-proxy.com/https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip):
+
+```bash
+npx skills add https://gh-proxy.com/https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip -g -y
+```
 
 ### Via Release Download (no Node.js required)
 
