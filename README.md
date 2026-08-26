@@ -2,19 +2,19 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Plane.so skill for [OpenClaw](https://github.com/openclaw/openclaw) agents** — manage projects, work items, cycles, modules, comments, and members via a zero-dependency Python CLI.
+**Plane.so skill for [OpenClaw](https://github.com/openclaw/openclaw) agents** — manage projects, work items, cycles, modules, comments, and members via a zero-dependency Go CLI.
 
 ## Features
 
 - **Projects** — list, get, create
 - **Work Items** — list, get, create, update, assign, delete, search
 - **Comments** — list activity, add comments to work items
-- **Images** — download images embedded in work item descriptions
+- **Attachments & Images** — upload, embed, list, delete, and download work item files
 - **Cycles** — list, get, create sprints
 - **Modules** — list, get, create feature modules
 - **Members** — list workspace members (for finding assignee IDs)
 - **States & Labels** — list for reference
-- Zero dependencies — Python 3.8+ stdlib only
+- Native Go binary with no runtime dependencies
 - Color output with graceful degradation
 - Table and JSON output formats
 - Modular architecture for easy extension
@@ -22,52 +22,45 @@
 ## Architecture
 
 ```
-scripts/
-├── plane                 # Main CLI entry point
-├── plane_api.py          # API layer (auth, requests, errors)
-├── plane_output.py       # Output formatting (table/JSON)
-└── commands/             # Command handlers by endpoint
-    ├── user.py           # me
-    ├── workspace.py      # members
-    ├── projects.py       # projects CRUD
-    ├── work_items.py     # issues CRUD + search
-    ├── cycles.py         # cycles CRUD
-    ├── modules.py        # modules CRUD
-    ├── states.py         # states list
-    ├── labels.py         # labels list
-    ├── comments.py       # comments list/add
-    └── images.py         # image download (get-image, get-images)
+cmd/plane/main.go          # CLI entry point
+internal/api/              # auth, requests, errors, uploads, downloads
+internal/commands/         # command tree and Plane resources
+internal/output/           # table/JSON output and terminal colors
+internal/markdown/         # simple Markdown-to-HTML conversion
 ```
 
 The installable Agent Skill is built into the following package layout:
 
 ```
-skills/
-├── SKILL.md              # Skill instructions and metadata
-├── references/
-│   └── work-item-description.md  # Detailed body formatting rules
-└── scripts/
-    └── plane             # Bundled executable CLI
+my-plane-skill.zip
+├── SKILL.md              # Skill instructions and platform bootstrap
+└── references/
+    └── work-item-description.md  # Detailed body formatting rules
 ```
+
+The skill archive deliberately does not contain `scripts/plane`. The skill
+downloads the matching Release binary after installation.
 
 ## Requirements
 
-- **Python 3.8 or newer** — required to run the bundled CLI and build the zipapp. The CLI uses only Python's standard library; no `pip` installation is needed.
+- **Go 1.22 or newer** — only required when building from source.
+- **Supported release targets** — Linux amd64/arm64, macOS amd64/arm64, and Windows amd64.
 - **Node.js with `npx`** — optional; only required when installing through `npx skills add`.
 
 ## Installation
 
 ### Via `npx skills add` (recommended)
 
-Install the prebuilt skill archive and its bundled CLI:
+Install the prebuilt skill archive:
 
 ```bash
 npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
 ```
 
-The archive contains `SKILL.md`, `references/`, and the single-file
-`scripts/plane` CLI. Installing the archive avoids pulling the repository's
-source tree and does not require a global `plane` binary or PATH modification.
+The archive contains `SKILL.md` and `references/` only. After installation,
+follow `SKILL.md` to download the native binary for the current platform into
+the skill's `scripts/` directory. This avoids a global `plane` command or PATH
+modification.
 
 If the download fails because of a network error, retry with the [GitHub proxy
 URL](https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip):
@@ -83,26 +76,46 @@ agent's skills directory at `~/.agents/skills`:
 
 ```bash
 mkdir -p ~/.agents/skills/my-plane
-curl -L -o /tmp/my-plane-skill.zip https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
+curl -fL -o /tmp/my-plane-skill.zip https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
 unzip -o /tmp/my-plane-skill.zip -d ~/.agents/skills/my-plane
-chmod +x ~/.agents/skills/my-plane/scripts/plane
 ```
 
-This installs `~/.agents/skills/my-plane/SKILL.md`, the `references/`
-documentation, and `~/.agents/skills/my-plane/scripts/plane` without Node.js.
-Python 3.8+ is still required to run the bundled CLI.
+This installs the skill instructions and references without Node.js. Run the
+platform bootstrap in `SKILL.md` to download the CLI binary afterward.
 
 ### Build from Source
 
 ```bash
 git clone https://github.com/HonLuk/my-plane.git
 cd my-plane
-python3 build.py
-./skills/scripts/plane --help
+go build -trimpath -o dist/plane ./cmd/plane
+./dist/plane --help
 ```
 
-The build output is always written to `skills/SKILL.md`,
-`skills/references/work-item-description.md`, and `skills/scripts/plane`.
+To build every Release asset locally, including the documentation-only skill
+archive, run:
+
+```bash
+make release
+```
+
+The output is written to `dist/`. The skill archive is `dist/my-plane-skill.zip`.
+
+### Release Assets
+
+Each tagged GitHub Release contains these directly executable binaries:
+
+| Asset | Target |
+|---|---|
+| `plane-linux-amd64` | Linux x86-64 |
+| `plane-linux-arm64` | Linux ARM64 |
+| `plane-darwin-amd64` | macOS Intel |
+| `plane-darwin-arm64` | macOS Apple Silicon |
+| `plane-windows-amd64.exe` | Windows x86-64 |
+
+It also contains `my-plane-skill.zip` (instructions and references only) and
+`SHA256SUMS`. The skill downloads the appropriate binary into its own
+`scripts/` directory after installation.
 
 ## Setup
 
@@ -149,11 +162,11 @@ The examples below use `PLANE_CLI` so they do not depend on a global `PATH`
 entry. Set it once from the directory that contains the installed skill:
 
 ```bash
-# From the repository root after building the package:
-PLANE_CLI="./skills/scripts/plane"
+# From an installed Unix-like skill directory after bootstrap:
+PLANE_CLI="/path/to/installed/my-plane/scripts/plane"
 
-# From inside an installed skill directory, use instead:
-# PLANE_CLI="./scripts/plane"
+# Windows PowerShell uses:
+# $PlaneCli = "C:\path\to\installed\my-plane\scripts\plane.exe"
 ```
 
 Invoke commands as `"$PLANE_CLI" ...`; the skill does not assume that a bare
@@ -239,6 +252,15 @@ Invoke commands as `"$PLANE_CLI" ...`; the skill does not assume that a bare
 # Download a single image by asset UUID
 "$PLANE_CLI" get-image PROJ-123 20745b59-e398-460d-9532-e0d56fbe7919 ./screenshot.png
 
+# Upload an attachment; images are also inserted into the description
+"$PLANE_CLI" attachments upload PROJ-123 ./screenshot.png -f json
+
+# List, download, complete, or delete attachments
+"$PLANE_CLI" attachments list PROJ-123 -f json
+"$PLANE_CLI" attachments get PROJ-123 RESOURCE_UUID ./downloaded-file
+"$PLANE_CLI" attachments complete PROJ-123 RESOURCE_UUID
+"$PLANE_CLI" attachments delete PROJ-123 RESOURCE_UUID
+
 # JSON output (returns downloaded file paths and metadata)
 "$PLANE_CLI" get-images PROJ-123 ./images/ -f json
 
@@ -288,6 +310,11 @@ Every command has detailed help available:
 | `"$PLANE_CLI" modules create -p PROJECT_ID --name N` | Create module |
 | `"$PLANE_CLI" states -p PROJECT_ID` | List workflow states |
 | `"$PLANE_CLI" labels -p PROJECT_ID` | List labels |
+| `"$PLANE_CLI" attachments list PROJ-SEQ` | List all file attachments on a work item |
+| `"$PLANE_CLI" attachments get PROJ-SEQ UUID FILE` | Download an attachment by resource UUID |
+| `"$PLANE_CLI" attachments upload PROJ-SEQ FILE` | Upload a file; insert an image into the description when applicable |
+| `"$PLANE_CLI" attachments complete PROJ-SEQ UUID` | Mark an attachment as uploaded |
+| `"$PLANE_CLI" attachments delete PROJ-SEQ UUID` | Delete an attachment |
 | `"$PLANE_CLI" get-images PROJ-SEQ DIR` | Download all images from a work item |
 | `"$PLANE_CLI" get-image PROJ-SEQ UUID FILE` | Download a single image by asset UUID |
 
@@ -355,11 +382,58 @@ Work item descriptions often contain embedded images (screenshots, diagrams, etc
 
 Files are named by asset UUID with the correct extension (e.g., `20745b59-....png`). If no extension is provided in the output path for `get-image`, it is auto-appended based on the image's Content-Type.
 
+### Attachments and Image Embedding
+
+The `attachments` command group mirrors the Plane issue-attachments API:
+
+```bash
+# List all attachments on a work item.
+"$PLANE_CLI" attachments list PROJ-123 -f json
+
+# Upload a file. Images are confirmed and inserted into description_html.
+"$PLANE_CLI" attachments upload PROJ-123 ./screenshot.png -f json
+
+# Download, complete, and delete an attachment.
+"$PLANE_CLI" attachments get PROJ-123 RESOURCE_UUID ./downloaded-file
+"$PLANE_CLI" attachments complete PROJ-123 RESOURCE_UUID
+"$PLANE_CLI" attachments delete PROJ-123 RESOURCE_UUID
+```
+
+`attachments upload` performs the credentials, object-storage upload, and
+completion steps as one operation. It accepts any file type whose MIME type
+can be determined from the extension; use `--type MIME` for an extensionless or
+uncommon file. JPEG, PNG, WebP, and GIF files also append this element to the
+existing description:
+
+```html
+<image-component src="ASSET_UUID"></image-component>
+```
+
+The JSON result contains a safe `asset_id`, `asset_url`, file metadata, and
+`inserted` status. Signed form fields and signed URLs are never printed. Use
+`asset_id`, not `asset_url`, in the stored description HTML. If the description
+update fails after the attachment is confirmed, the attachment is retained and
+the command reports its asset ID for manual repair:
+
+```bash
+"$PLANE_CLI" issues get-short PROJ-123 -f json
+"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_UUID \
+  --description-html '<p>Existing content.</p><image-component src="ASSET_UUID"></image-component>'
+```
+
+When creating an issue and inserting a screenshot, create the issue first and
+then run `attachments upload PROJECT-SEQ FILE -f json`. The database stores
+only the short `<image-component>` element. The editor creates the browser-only
+React wrapper, `/api/assets/v2/...` image URL, download button, and fullscreen
+button at runtime; do not paste that generated DOM into the description.
+
 ## How It Works
 
-The source CLI is `scripts/plane`, and `build.py` packages it as
-`skills/scripts/plane` beside `skills/SKILL.md`. It wraps the [Plane.so REST API v1](https://developers.plane.so/)
-using only Python standard library modules (`urllib`, `json`, `argparse`) — no pip installs needed.
+The source CLI is `cmd/plane`, compiled as a pure Go binary with
+`CGO_ENABLED=0`. GitHub Actions cross-compiles the supported targets and
+publishes them beside the documentation-only `my-plane-skill.zip`. The binary
+wraps the [Plane.so REST API v1](https://developers.plane.so/) without runtime
+dependencies.
 
 ## Acknowledgments
 

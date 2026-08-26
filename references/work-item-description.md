@@ -11,8 +11,9 @@ contains formatting, colors, links, code, or Markdown.
 - [4. Display settings, headings, and font size](#4-display-settings-headings-and-font-size)
 - [5. Text colors and backgrounds](#5-text-colors-and-backgrounds)
 - [6. Markdown support](#6-markdown-support)
-- [7. Complete examples](#7-complete-examples)
-- [8. Safety and validation](#8-safety-and-validation)
+- [7. File attachments and inserting images](#7-file-attachments-and-inserting-images)
+- [8. Complete examples](#8-complete-examples)
+- [9. Safety and validation](#9-safety-and-validation)
 
 ## 1. Choose the input mode
 
@@ -187,7 +188,86 @@ expect raw HTML inside `--description` to remain active; it is escaped for
 safety. If Markdown needs Plane colors or backgrounds, convert the surrounding
 structure to HTML and use `--description-html`.
 
-## 7. Complete examples
+## 7. File attachments and inserting images
+
+`attachments upload` uploads a local file as a work-item attachment, confirms
+the object-storage upload, and appends an
+`<image-component>` to the existing description:
+
+```bash
+"$PLANE_CLI" attachments upload PROJ-123 ./screenshot.png -f json
+```
+
+The JSON response contains a safe `asset_id`, `asset_url`, file metadata, an
+`image_component` value, and `inserted: true`. The command preserves the
+existing `description_html` and uses the UUID in `asset_id` for the appended
+element; do not put `asset_url` in `src`:
+
+```html
+<image-component src="ASSET_UUID"></image-component>
+```
+
+The attachment is created and confirmed through the v1 API-key-compatible
+work-item attachment API. The confirmed attachment is intentionally retained:
+the image download endpoint and the editor's image component both resolve this
+attachment. A failed transfer or confirmation is cleaned up when possible, but
+an attachment is never deleted after it has been confirmed if the description
+update fails.
+
+The command reads the existing `description_html`, keeps its current HTML,
+appends the tag, and sends the complete result with `--description-html`. The
+resulting body has this shape:
+
+```text
+Existing description HTML:
+<h2>Requirements</h2><p>Keep this content unchanged.</p>
+
+New description HTML:
+<h2>Requirements</h2><p>Keep this content unchanged.</p><image-component src="ASSET_UUID"></image-component>
+```
+
+Normally the command performs the complete workflow. If description insertion
+fails, use the reported asset ID and repair the body manually:
+
+```bash
+# 1. Read the existing body and issue UUID; preserve description_html.
+"$PLANE_CLI" issues get-short PROJ-123 -f json
+
+# 2. Append <image-component src="ASSET_UUID"></image-component> to the
+#    existing HTML, then write the full HTML back (PROJECT_ID is the UUID).
+"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_UUID \
+  --description-html '<h2>Requirements</h2><p>Keep this content unchanged.</p><image-component src="ASSET_UUID"></image-component>'
+```
+
+The value saved in the database is the small custom element shown above. The
+large DOM visible in a browser is generated at runtime by the editor. For
+example, `div.react-renderer.node-imageComponent`, `data-node-view-wrapper`,
+the `<img src="/api/assets/v2/...">`, and the hover buttons for download and
+fullscreen are runtime wrappers and controls. Do not copy those React DOM
+wrappers, the `/api/assets/v2/` URL, or the download icon HTML into
+`--description-html`; store only the `image-component` tag with the asset UUID.
+
+The same command group handles non-image files and the remaining attachment
+operations:
+
+```bash
+# List all attachments on a work item.
+"$PLANE_CLI" attachments list PROJ-123 -f json
+
+# Download any attachment by resource UUID.
+"$PLANE_CLI" attachments get PROJ-123 RESOURCE_UUID ./downloaded-file
+
+# Mark an upload complete or remove it.
+"$PLANE_CLI" attachments complete PROJ-123 RESOURCE_UUID
+"$PLANE_CLI" attachments delete PROJ-123 RESOURCE_UUID
+```
+
+`attachments upload` combines the documented credentials, direct object-storage
+upload, and completion calls. Use `--type MIME` when the file extension does
+not identify a MIME type. `get-image` and `get-images` remain the image-specific
+download helpers for `<image-component>` values in `description_html`.
+
+## 8. Complete examples
 
 The commands below assume the skill's `PLANE_CLI` variable has been set as
 described in `SKILL.md`.
@@ -218,7 +298,7 @@ Use the same `--description-html` option when updating an existing work item:
   --description-html '<p><span data-text-color="pink">Updated note</span></p>'
 ```
 
-## 8. Safety and validation
+## 9. Safety and validation
 
 - Treat user-provided text as text. Escape `<`, `>`, `&`, and quotes before interpolating it into hand-written HTML.
 - Do not send scripts, event-handler attributes such as `onclick`, or unnecessary inline styles. The API sanitizes content, but sanitization is not a formatting strategy.

@@ -1,6 +1,6 @@
 ---
 name: my-plane
-description: "Manage Plane.so projects and work items using the `plane` CLI. List projects, create/update/search issues, manage cycles and modules, add comments, and assign members."
+description: "Manage Plane.so projects and work items using the `plane` CLI. List projects, create/update/search issues, manage file attachments and embedded images, manage cycles and modules, add comments, and assign members."
 metadata: {"moltbot":{"requires":{"env":["PLANE_API_KEY","PLANE_WORKSPACE"]},"primaryEnv":"PLANE_API_KEY","emoji":"✈️","homepage":"https://github.com/HonLuk/my-plane"}}
 ---
 
@@ -10,14 +10,15 @@ Interact with [Plane.so](https://plane.so) project management via the `plane` CL
 
 ## Installation
 
-Install this skill together with its bundled CLI:
+Install the skill instructions and references from the latest release:
 
 ```bash
 npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
 ```
 
-Install from the release archive so the installer receives the built
-single-file CLI instead of the repository source tree.
+The skill archive intentionally contains no `scripts/plane` binary. After the
+skill is installed, download the native binary for the current platform into
+the skill directory as described below.
 
 If the direct download fails because of a network error, retry with the
 [GitHub proxy URL](https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip):
@@ -26,32 +27,76 @@ If the direct download fails because of a network error, retry with the
 npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
 ```
 
-The CLI is bundled at `scripts/plane` relative to this `SKILL.md`. Resolve the
-directory containing this file and set the path before running commands:
+### Unix-like systems
+
+Resolve the directory containing this `SKILL.md`, detect the platform, and
+download the matching Release asset:
+
+```bash
+SKILL_DIR="/path/to/installed/my-plane"
+
+case "$(uname -s)" in
+  Linux) PLANE_OS=linux ;;
+  Darwin) PLANE_OS=darwin ;;
+  *) echo "Unsupported operating system: $(uname -s)" >&2; exit 1 ;;
+esac
+
+case "$(uname -m)" in
+  x86_64|amd64) PLANE_ARCH=amd64 ;;
+  arm64|aarch64) PLANE_ARCH=arm64 ;;
+  *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+esac
+
+ASSET="plane-${PLANE_OS}-${PLANE_ARCH}"
+mkdir -p "$SKILL_DIR/scripts"
+curl -fL --retry 3 \
+  "https://github.com/HonLuk/my-plane/releases/latest/download/${ASSET}" \
+  -o "$SKILL_DIR/scripts/plane"
+chmod +x "$SKILL_DIR/scripts/plane"
+
+PLANE_CLI="$SKILL_DIR/scripts/plane"
+"$PLANE_CLI" --help
+```
+
+### Windows PowerShell
+
+The current Windows release supports amd64:
+
+```powershell
+$SkillDir = "C:\path\to\installed\my-plane"
+$ScriptsDir = Join-Path $SkillDir "scripts"
+New-Item -ItemType Directory -Force -Path $ScriptsDir | Out-Null
+$PlaneCli = Join-Path $ScriptsDir "plane.exe"
+Invoke-WebRequest `
+  -Uri "https://github.com/HonLuk/my-plane/releases/latest/download/plane-windows-amd64.exe" `
+  -OutFile $PlaneCli
+& $PlaneCli --help
+```
+
+Always invoke the resolved `PLANE_CLI` path; do not assume that a bare `plane`
+command is on the user's `PATH`. On Unix it is `scripts/plane`; on Windows it
+is `scripts/plane.exe`.
+
+If Node.js is unavailable, download and extract the skill archive manually,
+then run the platform-specific bootstrap commands above:
+
+```bash
+mkdir -p ~/.agents/skills/my-plane
+curl -fL -o /tmp/my-plane-skill.zip \
+  https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
+unzip -o /tmp/my-plane-skill.zip -d ~/.agents/skills/my-plane
+```
+
+The CLI is a native Go binary and does not require Python, Go, or Node.js at
+runtime. Node.js is only needed when installing through `npx skills add`.
+
+After the bootstrap completes, set the command path before running commands:
 
 ```bash
 # Replace this with the actual directory containing this SKILL.md.
-PLANE_CLI="/path/to/my-plane/scripts/plane"
+PLANE_CLI="/path/to/installed/my-plane/scripts/plane"
 "$PLANE_CLI" me
 ```
-
-Always invoke `"$PLANE_CLI"`; do not assume that a bare `plane` command is on
-the user's `PATH`. In a repository checkout, the generated package path is
-`./skills/scripts/plane`; inside an installed skill directory it is
-`./scripts/plane`.
-
-If Node.js is unavailable, download the release package into the agent's
-`skills/` directory instead:
-
-```bash
-mkdir -p skills
-curl -L -o /tmp/my-plane-skill.zip https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
-unzip -o /tmp/my-plane-skill.zip -d skills
-chmod +x skills/scripts/plane
-```
-
-The bundled CLI still requires Python 3.8 or newer, but this installation path
-does not require Node.js.
 
 ## Setup
 
@@ -177,9 +222,53 @@ The examples below assume `PLANE_CLI` has been set as shown above.
 "$PLANE_CLI" labels -p PROJECT_ID    # List labels (useful for getting label IDs)
 ```
 
-### Images
+### Attachments
 
-Download images embedded in work item descriptions. Image asset UUIDs are found in the `<image-component src="UUID">` tags of a work item's `description_html` field (visible via `"$PLANE_CLI" issues get-short PROJ-SEQ -f json`).
+Use the `attachments` command group for every file attachment operation. Read
+`references/work-item-description.md` when you need the HTML rules or need to
+recover from a failed image description update.
+
+```bash
+# List all file attachments on a work item.
+"$PLANE_CLI" attachments list PROJ-123 -f json
+
+# Upload a file. For images, also append an image-component to description_html.
+"$PLANE_CLI" attachments upload PROJ-123 ./screenshot.png -f json
+
+# Download any attachment by its resource UUID.
+"$PLANE_CLI" attachments get PROJ-123 RESOURCE_UUID ./downloaded-file
+
+# Complete or delete an attachment.
+"$PLANE_CLI" attachments complete PROJ-123 RESOURCE_UUID
+"$PLANE_CLI" attachments delete PROJ-123 RESOURCE_UUID
+```
+
+`attachments upload` performs the complete Plane flow: request upload
+credentials, send the file to object storage, then mark the attachment as
+uploaded. It accepts any MIME type known from the file extension; pass
+`--type MIME` for an extensionless or uncommon file. JPEG, PNG, WebP, and GIF
+files are inserted into the existing description with:
+
+```html
+<image-component src="ASSET_UUID"></image-component>
+```
+
+The JSON output includes the safe `asset_id`, `asset_url`, file metadata, and
+`inserted` status. Signed upload fields and signed URLs are never printed. If
+the description update fails after confirmation, the attachment is retained
+and the error includes the asset ID so the existing HTML can be repaired.
+
+When creating an issue and then adding a screenshot, create the issue first,
+then use `attachments upload PROJECT-SEQ FILE -f json`; do not put an object
+storage URL in `description_html`. The editor's `react-renderer` wrapper,
+`/api/assets/v2/...` URL, and download or fullscreen controls are browser-
+generated DOM, not content to store in the description.
+
+### Image Downloads
+
+Image asset UUIDs are found in the `<image-component src="UUID">` tags of a
+work item's `description_html` field (visible via
+`"$PLANE_CLI" issues get-short PROJ-SEQ -f json`).
 
 ```bash
 # Download all images from a work item to a directory
