@@ -29,17 +29,21 @@ internal/output/           # table/JSON output and terminal colors
 internal/markdown/         # simple Markdown-to-HTML conversion
 ```
 
-The installable Agent Skill is built into the following package layout:
+The installable Agent Skill is published as one package for each supported
+platform and architecture:
 
 ```
-my-plane-skill.zip
-├── SKILL.md              # Skill instructions and platform bootstrap
-└── references/
-    └── work-item-description.md  # Detailed body formatting rules
+my-plane-skill-linux-amd64.zip
+├── SKILL.md
+├── references/
+│   └── work-item-description.md  # Detailed body formatting rules
+└── scripts/
+    └── plane                     # Matching native CLI binary
 ```
 
-The skill archive deliberately does not contain `scripts/plane`. The skill
-downloads the matching Release binary after installation.
+The other packages use the same layout. The Windows package contains
+`scripts/plane.exe`. Each package already includes its matching native binary,
+so no second binary download is required after installation.
 
 ## Requirements
 
@@ -49,39 +53,51 @@ downloads the matching Release binary after installation.
 
 ## Installation
 
+Download the skill package for the target platform and architecture:
+
+| Target | Direct skill package |
+|---|---|
+| Linux x86-64 | [my-plane-skill-linux-amd64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip) |
+| Linux ARM64 | [my-plane-skill-linux-arm64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-arm64.zip) |
+| macOS Intel | [my-plane-skill-darwin-amd64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-amd64.zip) |
+| macOS Apple Silicon | [my-plane-skill-darwin-arm64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-arm64.zip) |
+| Windows x86-64 | [my-plane-skill-windows-amd64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-windows-amd64.zip) |
+
 ### Via `npx skills add` (recommended)
 
-Install the prebuilt skill archive:
+Choose the package matching the host platform and architecture, then pass its
+Release URL directly to `npx skills add`:
 
 ```bash
-npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
+npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip
 ```
 
-The archive contains `SKILL.md` and `references/` only. After installation,
-follow `SKILL.md` to download the native binary for the current platform into
-the skill's `scripts/` directory. This avoids a global `plane` command or PATH
-modification.
+Replace `linux-amd64` with the matching target from the [release asset
+list](#release-assets). The selected skill package includes the CLI, so there
+is no follow-up installation step and no global `plane` command or `PATH`
+modification is needed.
 
 If the download fails because of a network error, retry with the [GitHub proxy
-URL](https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip):
+URL](https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip)
+and replace the target suffix when necessary:
 
 ```bash
-npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
+npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip
 ```
 
 ### Via Release Download (no Node.js required)
 
-If Node.js is unavailable, download and extract the skill package into the
-agent's skills directory at `~/.agents/skills`:
+If Node.js is unavailable, download and extract the same platform-specific
+skill package into the agent's skills directory at `~/.agents/skills`:
 
 ```bash
 mkdir -p ~/.agents/skills/my-plane
-curl -fL -o /tmp/my-plane-skill.zip https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
-unzip -o /tmp/my-plane-skill.zip -d ~/.agents/skills/my-plane
+curl -fL -o /tmp/my-plane-skill-linux-amd64.zip https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip
+unzip -o /tmp/my-plane-skill-linux-amd64.zip -d ~/.agents/skills/my-plane
 ```
 
-This installs the skill instructions and references without Node.js. Run the
-platform bootstrap in `SKILL.md` to download the CLI binary afterward.
+Change `linux-amd64` in both URLs for the target platform. The extracted skill
+already contains the matching CLI binary.
 
 ### Build from Source
 
@@ -92,14 +108,16 @@ go build -trimpath -o dist/plane ./cmd/plane
 ./dist/plane --help
 ```
 
-To build every Release asset locally, including the documentation-only skill
-archive, run:
+To build every Release asset locally, including all platform-specific skill
+packages, run:
 
 ```bash
 make release
 ```
 
-The output is written to `dist/`. The skill archive is `dist/my-plane-skill.zip`.
+The output is written to `dist/`. It contains five standalone binaries, five
+skill packages named `my-plane-skill-<platform>-<architecture>.zip`, and
+`SHA256SUMS`.
 
 ### Release Assets
 
@@ -113,9 +131,19 @@ Each tagged GitHub Release contains these directly executable binaries:
 | `plane-darwin-arm64` | macOS Apple Silicon |
 | `plane-windows-amd64.exe` | Windows x86-64 |
 
-It also contains `my-plane-skill.zip` (instructions and references only) and
-`SHA256SUMS`. The skill downloads the appropriate binary into its own
-`scripts/` directory after installation.
+It also contains a platform-specific skill package for each target:
+
+| Package | Target |
+|---|---|
+| [`my-plane-skill-linux-amd64.zip`](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip) | Linux x86-64 |
+| [`my-plane-skill-linux-arm64.zip`](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-arm64.zip) | Linux ARM64 |
+| [`my-plane-skill-darwin-amd64.zip`](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-amd64.zip) | macOS Intel |
+| [`my-plane-skill-darwin-arm64.zip`](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-arm64.zip) | macOS Apple Silicon |
+| [`my-plane-skill-windows-amd64.zip`](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-windows-amd64.zip) | Windows x86-64 |
+
+Each skill package contains `SKILL.md`, `references/`, and the matching CLI at
+`scripts/plane` (or `scripts/plane.exe` on Windows). `SHA256SUMS` covers all
+standalone binaries and skill packages.
 
 ## Setup
 
@@ -162,7 +190,7 @@ The examples below use `PLANE_CLI` so they do not depend on a global `PATH`
 entry. Set it once from the directory that contains the installed skill:
 
 ```bash
-# From an installed Unix-like skill directory after bootstrap:
+# From an installed Unix-like skill directory:
 PLANE_CLI="/path/to/installed/my-plane/scripts/plane"
 
 # Windows PowerShell uses:
@@ -431,9 +459,9 @@ button at runtime; do not paste that generated DOM into the description.
 
 The source CLI is `cmd/plane`, compiled as a pure Go binary with
 `CGO_ENABLED=0`. GitHub Actions cross-compiles the supported targets and
-publishes them beside the documentation-only `my-plane-skill.zip`. The binary
-wraps the [Plane.so REST API v1](https://developers.plane.so/) without runtime
-dependencies.
+publishes the standalone binaries together with target-specific skill packages
+that embed the matching binary. The binary wraps the [Plane.so REST API
+v1](https://developers.plane.so/) without runtime dependencies.
 
 ## Acknowledgments
 

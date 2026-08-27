@@ -25,7 +25,7 @@ jobs:
       - name: Build all release assets
         run: make release
 
-      - name: Validate native binary and skill archive
+      - name: Validate native binaries and skill archives
         run: |
           dist/plane-linux-amd64 --help
           test -f dist/plane-linux-amd64
@@ -33,11 +33,23 @@ jobs:
           test -f dist/plane-darwin-amd64
           test -f dist/plane-darwin-arm64
           test -f dist/plane-windows-amd64.exe
-          test -f dist/my-plane-skill.zip
+          test -f dist/my-plane-skill-linux-amd64.zip
+          test -f dist/my-plane-skill-linux-arm64.zip
+          test -f dist/my-plane-skill-darwin-amd64.zip
+          test -f dist/my-plane-skill-darwin-arm64.zip
+          test -f dist/my-plane-skill-windows-amd64.zip
           test -f dist/SHA256SUMS
-          ! unzip -Z1 dist/my-plane-skill.zip | grep -Eq '(^|/)scripts/plane(\.exe)?$'
-          unzip -Z1 dist/my-plane-skill.zip | grep -Fx 'SKILL.md'
-          unzip -Z1 dist/my-plane-skill.zip | grep -Fx 'references/work-item-description.md'
+          for target in linux-amd64 linux-arm64 darwin-amd64 darwin-arm64; do
+            archive="dist/my-plane-skill-${target}.zip"
+            unzip -Z1 "$archive" | grep -Fx 'SKILL.md'
+            unzip -Z1 "$archive" | grep -Fx 'references/work-item-description.md'
+            unzip -Z1 "$archive" | grep -Fx 'scripts/plane'
+            unzip -p "$archive" scripts/plane | cmp - "dist/plane-${target}"
+          done
+          unzip -Z1 dist/my-plane-skill-windows-amd64.zip | grep -Fx 'SKILL.md'
+          unzip -Z1 dist/my-plane-skill-windows-amd64.zip | grep -Fx 'references/work-item-description.md'
+          unzip -Z1 dist/my-plane-skill-windows-amd64.zip | grep -Fx 'scripts/plane.exe'
+          unzip -p dist/my-plane-skill-windows-amd64.zip scripts/plane.exe | cmp - dist/plane-windows-amd64.exe
 
       - name: Get version from tag
         id: version
@@ -53,26 +65,33 @@ jobs:
             dist/plane-darwin-amd64
             dist/plane-darwin-arm64
             dist/plane-windows-amd64.exe
-            dist/my-plane-skill.zip
+            dist/my-plane-skill-linux-amd64.zip
+            dist/my-plane-skill-linux-arm64.zip
+            dist/my-plane-skill-darwin-amd64.zip
+            dist/my-plane-skill-darwin-arm64.zip
+            dist/my-plane-skill-windows-amd64.zip
             dist/SHA256SUMS
           body: |
             ## Plane CLI ${{ steps.version.outputs.VERSION }}
 
-            This release contains native Go binaries for Linux, macOS, and Windows.
+            This release contains standalone native Go binaries for Linux, macOS, and Windows.
 
             ### Skill installation
 
+            Choose the `my-plane-skill-<platform>-<architecture>.zip` package that matches
+            your system. Each package includes the skill instructions, references, and the
+            matching CLI binary, so no separate binary download is required.
+
             ```bash
-            npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill.zip
+            npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-linux-amd64.zip
             ```
 
-            The skill archive contains instructions and references only. After installing it,
-            follow `SKILL.md` to download the binary for the current platform into `scripts/plane`.
+            Replace `linux-amd64` with the target platform and architecture when necessary.
 
             If the direct download fails because of a network error, retry with the GitHub proxy URL:
 
             ```bash
-            npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill.zip
+            npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-linux-amd64.zip
             ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

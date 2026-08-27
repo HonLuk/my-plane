@@ -8,95 +8,24 @@ metadata: {"moltbot":{"requires":{"env":["PLANE_API_KEY","PLANE_WORKSPACE"]},"pr
 
 Interact with [Plane.so](https://plane.so) project management via the `plane` CLI.
 
-## Installation
+## CLI
 
-Install the skill instructions and references from the latest release:
+Each platform-specific release archive already contains the matching native Go
+binary. It is located at `scripts/plane` on Unix-like systems and
+`scripts/plane.exe` on Windows.
 
-```bash
-npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
-```
-
-The skill archive intentionally contains no `scripts/plane` binary. After the
-skill is installed, download the native binary for the current platform into
-the skill directory as described below.
-
-If the direct download fails because of a network error, retry with the
-[GitHub proxy URL](https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip):
+Resolve the directory containing this `SKILL.md`, set `PLANE_CLI` to the bundled
+binary, and invoke that path directly. Do not assume that a bare `plane`
+command is available on the user's `PATH`:
 
 ```bash
-npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
-```
-
-### Unix-like systems
-
-Resolve the directory containing this `SKILL.md`, detect the platform, and
-download the matching Release asset:
-
-```bash
-SKILL_DIR="/path/to/installed/my-plane"
-
-case "$(uname -s)" in
-  Linux) PLANE_OS=linux ;;
-  Darwin) PLANE_OS=darwin ;;
-  *) echo "Unsupported operating system: $(uname -s)" >&2; exit 1 ;;
-esac
-
-case "$(uname -m)" in
-  x86_64|amd64) PLANE_ARCH=amd64 ;;
-  arm64|aarch64) PLANE_ARCH=arm64 ;;
-  *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
-esac
-
-ASSET="plane-${PLANE_OS}-${PLANE_ARCH}"
-mkdir -p "$SKILL_DIR/scripts"
-curl -fL --retry 3 \
-  "https://github.com/HonLuk/my-plane/releases/latest/download/${ASSET}" \
-  -o "$SKILL_DIR/scripts/plane"
-chmod +x "$SKILL_DIR/scripts/plane"
-
-PLANE_CLI="$SKILL_DIR/scripts/plane"
-"$PLANE_CLI" --help
-```
-
-### Windows PowerShell
-
-The current Windows release supports amd64:
-
-```powershell
-$SkillDir = "C:\path\to\installed\my-plane"
-$ScriptsDir = Join-Path $SkillDir "scripts"
-New-Item -ItemType Directory -Force -Path $ScriptsDir | Out-Null
-$PlaneCli = Join-Path $ScriptsDir "plane.exe"
-Invoke-WebRequest `
-  -Uri "https://github.com/HonLuk/my-plane/releases/latest/download/plane-windows-amd64.exe" `
-  -OutFile $PlaneCli
-& $PlaneCli --help
-```
-
-Always invoke the resolved `PLANE_CLI` path; do not assume that a bare `plane`
-command is on the user's `PATH`. On Unix it is `scripts/plane`; on Windows it
-is `scripts/plane.exe`.
-
-If Node.js is unavailable, download and extract the skill archive manually,
-then run the platform-specific bootstrap commands above:
-
-```bash
-mkdir -p ~/.agents/skills/my-plane
-curl -fL -o /tmp/my-plane-skill.zip \
-  https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill.zip
-unzip -o /tmp/my-plane-skill.zip -d ~/.agents/skills/my-plane
-```
-
-The CLI is a native Go binary and does not require Python, Go, or Node.js at
-runtime. Node.js is only needed when installing through `npx skills add`.
-
-After the bootstrap completes, set the command path before running commands:
-
-```bash
-# Replace this with the actual directory containing this SKILL.md.
+# Replace this with the directory containing this SKILL.md.
 PLANE_CLI="/path/to/installed/my-plane/scripts/plane"
 "$PLANE_CLI" me
 ```
+
+No additional binary download is required after installing the matching
+package.
 
 ## Setup
 
@@ -136,7 +65,7 @@ the Markdown-to-HTML boundary.
 
 ## Commands
 
-The examples below assume `PLANE_CLI` has been set as shown above.
+The examples below assume `PLANE_CLI` points to the bundled binary.
 
 ### Current User
 
