@@ -78,15 +78,17 @@ jobs:
 
             ### Skill installation
 
-            Choose the `my-plane-skill-<platform>-<architecture>.zip` package that matches
-            your system. Each package includes the skill instructions, references, and the
-            matching CLI binary, so no separate binary download is required.
+            Choose the package matching your system. Each package includes the skill
+            instructions, references, and matching CLI binary, so no separate binary
+            download is required.
 
-            ```bash
-            npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-linux-amd64.zip
-            ```
-
-            Replace `linux-amd64` with the target platform and architecture when necessary.
+            | Target | Direct skill package | npx command |
+            |---|---|---|
+            | Linux x86-64 | [my-plane-skill-linux-amd64.zip](https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-linux-amd64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-linux-amd64.zip` |
+            | Linux ARM64 | [my-plane-skill-linux-arm64.zip](https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-linux-arm64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-linux-arm64.zip` |
+            | macOS Intel | [my-plane-skill-darwin-amd64.zip](https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-darwin-amd64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-darwin-amd64.zip` |
+            | macOS Apple Silicon | [my-plane-skill-darwin-arm64.zip](https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-darwin-arm64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-darwin-arm64.zip` |
+            | Windows x86-64 | [my-plane-skill-windows-amd64.zip](https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-windows-amd64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-windows-amd64.zip` |
 
             If the direct download fails because of a network error, retry with the GitHub proxy URL:
 

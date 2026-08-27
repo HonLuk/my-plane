@@ -53,33 +53,26 @@ so no second binary download is required after installation.
 
 ## Installation
 
-Download the skill package for the target platform and architecture:
-
-| Target | Direct skill package |
-|---|---|
-| Linux x86-64 | [my-plane-skill-linux-amd64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip) |
-| Linux ARM64 | [my-plane-skill-linux-arm64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-arm64.zip) |
-| macOS Intel | [my-plane-skill-darwin-amd64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-amd64.zip) |
-| macOS Apple Silicon | [my-plane-skill-darwin-arm64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-arm64.zip) |
-| Windows x86-64 | [my-plane-skill-windows-amd64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-windows-amd64.zip) |
-
 ### Via `npx skills add` (recommended)
 
-Choose the package matching the host platform and architecture, then pass its
-Release URL directly to `npx skills add`:
+Choose the package matching the host platform and architecture. The direct
+download link and complete `npx` command are listed below:
 
-```bash
-npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip
-```
+| Target | Direct skill package | npx command |
+|---|---|---|
+| Linux x86-64 | [my-plane-skill-linux-amd64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip` |
+| Linux ARM64 | [my-plane-skill-linux-arm64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-arm64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-arm64.zip` |
+| macOS Intel | [my-plane-skill-darwin-amd64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-amd64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-amd64.zip` |
+| macOS Apple Silicon | [my-plane-skill-darwin-arm64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-arm64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-darwin-arm64.zip` |
+| Windows x86-64 | [my-plane-skill-windows-amd64.zip](https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-windows-amd64.zip) | `npx skills add https://github.com/HonLuk/my-plane/releases/latest/download/my-plane-skill-windows-amd64.zip` |
 
-Replace `linux-amd64` with the matching target from the [release asset
-list](#release-assets). The selected skill package includes the CLI, so there
-is no follow-up installation step and no global `plane` command or `PATH`
-modification is needed.
+Each selected skill package includes the CLI, so there is no follow-up
+installation step and no global `plane` command or `PATH` modification is
+needed.
 
 If the download fails because of a network error, retry with the [GitHub proxy
-URL](https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip)
-and replace the target suffix when necessary:
+URL](https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip),
+replacing the target suffix when necessary:
 
 ```bash
 npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip
