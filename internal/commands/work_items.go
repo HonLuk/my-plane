@@ -3,10 +3,15 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
+	"strings"
 
+	"github.com/HonLuk/my-plane/internal/api"
 	"github.com/HonLuk/my-plane/internal/markdown"
 )
+
+const documentedIssueSearchLimit = 100
 
 func (r *runner) runIssues(args []string) error {
 	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
@@ -334,29 +339,92 @@ func (r *runner) issuesDelete(args []string) error {
 }
 
 func (r *runner) issuesSearch(args []string) error {
-	set := r.newFlagSet("issues search", "Usage: plane issues search QUERY [options]\n\nSearch work items by text across all projects in the workspace.")
+	set := r.newFlagSet("issues search", "Usage: plane issues search QUERY [QUERY...] [options]\n\nSearch work items by text across all projects in the workspace.")
 	options := addCommon(set, false)
 	help, err := parseFlags(set, args)
 	if help || err != nil {
 		return err
 	}
-	if err := requirePositionals(set.Args(), 1, "plane issues search QUERY"); err != nil {
-		return err
+	if len(set.Args()) == 0 {
+		return errors.New("usage: plane issues search QUERY")
 	}
 	if err := validateFormat(options.format); err != nil {
 		return err
+	}
+	query := strings.TrimSpace(strings.Join(set.Args(), " "))
+	if query == "" {
+		return errors.New("usage: plane issues search QUERY")
 	}
 	client, err := r.client()
 	if err != nil {
 		return err
 	}
-	params := url.Values{"search": []string{set.Args()[0]}, "type": []string{"work_item"}}
-	data, err := r.request(client, "GET", endpoint("/workspaces/"+client.Workspace+"/search/", params), nil)
+	data, err := r.searchIssues(client, query)
 	if err != nil {
 		return err
 	}
+	data = normalizeSearchIssueResponse(data)
+	if options.format == "table" {
+		if rows, ok := searchIssueRows(data); ok {
+			r.output.Format(rows, options.format, false)
+			return nil
+		}
+	}
 	r.output.Format(data, options.format, true)
 	return nil
+}
+
+// searchIssues uses the documented versioned endpoint. The backend owns the
+// keyword matching semantics; the CLI only normalizes the optional snippet
+// field before rendering the response.
+func (r *runner) searchIssues(client *api.Client, query string) (any, error) {
+	params := url.Values{
+		"limit":            []string{fmt.Sprint(documentedIssueSearchLimit)},
+		"search":           []string{query},
+		"workspace_search": []string{"true"},
+	}
+	return r.request(
+		client,
+		http.MethodGet,
+		endpoint("/workspaces/"+client.Workspace+"/work-items/search/", params),
+		nil,
+	)
+}
+
+// searchIssueRows extracts the work-item list from the documented API response
+// ({"issues": [...]}).
+func searchIssueRows(data any) ([]any, bool) {
+	object, ok := data.(map[string]any)
+	if !ok {
+		return nil, false
+	}
+	if rows, exists := object["issues"]; exists {
+		if rows == nil {
+			return []any{}, true
+		}
+		items, ok := rows.([]any)
+		return items, ok
+	}
+	return nil, false
+}
+
+// normalizeSearchIssueResponse adds the optional snippet field when an older
+// title-only endpoint omits it. This keeps JSON consumers compatible with the
+// extended endpoint, where a title match has description_snippet: null.
+func normalizeSearchIssueResponse(data any) any {
+	rows, ok := searchIssueRows(data)
+	if !ok {
+		return data
+	}
+	for _, row := range rows {
+		object, ok := row.(map[string]any)
+		if ok {
+			if _, exists := object["description_snippet"]; !exists {
+				object["description_snippet"] = nil
+			}
+		}
+	}
+	return data
 }
 
 func (r *runner) issuesGetShort(args []string) error {

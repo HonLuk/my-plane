@@ -162,6 +162,17 @@ func (r *Renderer) printList(rows []any) {
 		r.printTable(rows, []column{{"name", "NAME", 40}, {"start_date", "START", 12}, {"end_date", "END", 12}, {"id", "UUID", 36}})
 	case has(sample, "display_name"):
 		r.printTable(rows, []column{{"display_name", "NAME", 30}, {"email", "EMAIL", 40}, {"role", "ROLE", 10}, {"id", "UUID", 36}})
+	case has(sample, "name") && has(sample, "sequence_id") && has(sample, "project__identifier"):
+		columns := []column{
+			{"project__identifier", "PROJECT", 12},
+			{"sequence_id", "SEQ", 8},
+			{"name", "NAME", 50},
+		}
+		if anyHas(rows, "description_snippet") {
+			columns = append(columns, column{"description_snippet", "DESCRIPTION", 60})
+		}
+		columns = append(columns, column{"id", "UUID", 36})
+		r.printTable(rows, columns)
 	default:
 		keys := []string{"id", "identifier", "name", "title", "state", "priority", "sequence_id"}
 		columns := make([]column, 0, len(keys))
@@ -268,6 +279,16 @@ func (r *Renderer) printObject(object map[string]any) {
 func has(object map[string]any, key string) bool {
 	_, ok := object[key]
 	return ok
+}
+
+func anyHas(rows []any, key string) bool {
+	for _, rawRow := range rows {
+		row, ok := rawRow.(map[string]any)
+		if ok && has(row, key) {
+			return true
+		}
+	}
+	return false
 }
 
 func truthy(value any) bool {

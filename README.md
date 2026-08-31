@@ -237,7 +237,7 @@ Invoke commands as `"$PLANE_CLI" ...`; the skill does not assume that a bare
 # Delete a work item
 "$PLANE_CLI" issues delete -p PROJECT_ID ISSUE_UUID
 
-# Search across workspace
+# Search across workspace by title or supported body-search fields
 "$PLANE_CLI" issues search "login bug"
 
 # Add a comment
@@ -319,7 +319,7 @@ Every command has detailed help available:
 | `"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_ID [--fields]` | Update work item |
 | `"$PLANE_CLI" issues assign -p PROJECT_ID ISSUE_ID USER_ID...` | Assign work item |
 | `"$PLANE_CLI" issues delete -p PROJECT_ID ISSUE_ID` | Delete work item |
-| `"$PLANE_CLI" issues search QUERY` | Search work items |
+| `"$PLANE_CLI" issues search QUERY [QUERY...]` | Search work items by title; show body snippets when the server supports body search |
 | `"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID` | List comments/activity |
 | `"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID --all` | Show all activity |
 | `"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID "text"` | Add comment |

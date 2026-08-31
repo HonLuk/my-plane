@@ -116,7 +116,7 @@ The examples below assume `PLANE_CLI` points to the bundled binary.
 # Delete
 "$PLANE_CLI" issues delete -p PROJECT_ID ISSUE_ID
 
-# Search across workspace
+# Search across workspace by title or supported body-search fields
 "$PLANE_CLI" issues search "login bug"
 ```
 
