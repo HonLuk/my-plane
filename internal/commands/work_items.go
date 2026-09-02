@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/HonLuk/my-plane/internal/api"
-	"github.com/HonLuk/my-plane/internal/markdown"
 )
 
 const documentedIssueSearchLimit = 100
@@ -176,7 +175,7 @@ func (r *runner) issuesCreate(args []string) error {
 	); err != nil {
 		return err
 	}
-	descriptionValue, hasDescription, err := r.descriptionHTML(*description, *descriptionHTML)
+	descriptionValue, hasDescription, err := r.contentHTML(*description, *descriptionHTML, "--description", "--description-html")
 	if err != nil {
 		return err
 	}
@@ -238,7 +237,7 @@ func (r *runner) issuesUpdate(args []string) error {
 	if err := validateIDs(struct{ value, name string }{*project, "project ID"}, struct{ value, name string }{issue, "issue ID"}, struct{ value, name string }{*state, "state ID"}); err != nil {
 		return err
 	}
-	descriptionValue, hasDescription, err := r.descriptionHTML(*description, *descriptionHTML)
+	descriptionValue, hasDescription, err := r.contentHTML(*description, *descriptionHTML, "--description", "--description-html")
 	if err != nil {
 		return err
 	}
@@ -466,20 +465,4 @@ func validatePriority(value string) error {
 	default:
 		return fmt.Errorf("invalid priority %q: choose urgent, high, medium, low, or none", value)
 	}
-}
-
-func (r *runner) descriptionHTML(description, explicitHTML string) (string, bool, error) {
-	if description != "" && explicitHTML != "" {
-		return "", false, errors.New("--description and --description-html are mutually exclusive")
-	}
-	if explicitHTML != "" {
-		return explicitHTML, true, nil
-	}
-	if description == "" {
-		return "", false, nil
-	}
-	for _, warning := range markdown.Warnings(description) {
-		r.output.Errorln(r.output.Yellow("Warning: " + warning + "; use --description-html for full control."))
-	}
-	return markdown.ToHTML(description), true, nil
 }

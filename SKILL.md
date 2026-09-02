@@ -1,6 +1,6 @@
 ---
 name: my-plane
-description: "Manage Plane.so projects and work items using the `plane` CLI. List projects, create/update/search issues, manage file attachments and embedded images, manage cycles and modules, add comments, and assign members."
+description: "Manage Plane.so projects and work items using the `plane` CLI. List projects, create/update/search issues, manage file attachments and embedded images, manage cycles and modules, add/edit/delete comments, and assign members."
 metadata: {"moltbot":{"requires":{"env":["PLANE_API_KEY","PLANE_WORKSPACE"]},"primaryEnv":"PLANE_API_KEY","emoji":"✈️","homepage":"https://github.com/HonLuk/my-plane"}}
 ---
 
@@ -125,7 +125,12 @@ The examples below assume `PLANE_CLI` points to the bundled binary.
 ```bash
 "$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID            # List comments on a work item
 "$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID --all      # Show all activity (not just comments)
-"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID "Looks good, merging now"  # Add a comment
+"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID "Looks good, merging now"  # Add text or Markdown
+"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID --body-html '<p>Rich comment</p>'  # Add HTML
+"$PLANE_CLI" comments update -p PROJECT_ID -i ISSUE_ID COMMENT_ID "Updated comment"  # Edit text or Markdown
+"$PLANE_CLI" comments update -p PROJECT_ID -i ISSUE_ID COMMENT_ID --body-html '<p>Updated</p>'  # Edit HTML
+"$PLANE_CLI" comments delete -p PROJECT_ID -i ISSUE_ID COMMENT_ID  # Confirm before deleting
+"$PLANE_CLI" comments delete -p PROJECT_ID -i ISSUE_ID COMMENT_ID --yes  # Skip confirmation
 ```
 
 ### Cycles (Sprints)

@@ -8,7 +8,7 @@
 
 - **Projects** — list, get, create
 - **Work Items** — list, get, create, update, assign, delete, search
-- **Comments** — list activity, add comments to work items
+- **Comments** — list activity, add, edit, and delete comments on work items
 - **Attachments & Images** — upload, embed, list, delete, and download work item files
 - **Cycles** — list, get, create sprints
 - **Modules** — list, get, create feature modules
@@ -242,6 +242,17 @@ Invoke commands as `"$PLANE_CLI" ...`; the skill does not assume that a bare
 
 # Add a comment
 "$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_UUID "Working on this now"
+"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_UUID \
+  --body-html '<p><strong>Rich comment</strong></p>'
+
+# Update a comment (the comment UUID comes from comments list -f json)
+"$PLANE_CLI" comments update -p PROJECT_ID -i ISSUE_UUID COMMENT_UUID "Updated comment"
+"$PLANE_CLI" comments update -p PROJECT_ID -i ISSUE_UUID COMMENT_UUID \
+  --body-html '<p><em>Updated rich comment</em></p>'
+
+# Delete a comment (prompts for confirmation; use --yes for automation)
+"$PLANE_CLI" comments delete -p PROJECT_ID -i ISSUE_UUID COMMENT_UUID
+"$PLANE_CLI" comments delete -p PROJECT_ID -i ISSUE_UUID COMMENT_UUID --yes
 
 # List comments
 "$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_UUID
@@ -322,7 +333,11 @@ Every command has detailed help available:
 | `"$PLANE_CLI" issues search QUERY [QUERY...]` | Search work items by title; show body snippets when the server supports body search |
 | `"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID` | List comments/activity |
 | `"$PLANE_CLI" comments list -p PROJECT_ID -i ISSUE_ID --all` | Show all activity |
-| `"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID "text"` | Add comment |
+| `"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID "text"` | Add plain text or Markdown comment |
+| `"$PLANE_CLI" comments add -p PROJECT_ID -i ISSUE_ID --body-html HTML` | Add HTML comment |
+| `"$PLANE_CLI" comments update -p PROJECT_ID -i ISSUE_ID COMMENT_ID "text"` | Update a plain text or Markdown comment |
+| `"$PLANE_CLI" comments update -p PROJECT_ID -i ISSUE_ID COMMENT_ID --body-html HTML` | Update an HTML comment |
+| `"$PLANE_CLI" comments delete -p PROJECT_ID -i ISSUE_ID COMMENT_ID [--yes]` | Delete a comment |
 | `"$PLANE_CLI" cycles list -p PROJECT_ID` | List cycles |
 | `"$PLANE_CLI" cycles get -p PROJECT_ID CYCLE_ID` | Get cycle details |
 | `"$PLANE_CLI" cycles create -p PROJECT_ID --name N` | Create cycle |

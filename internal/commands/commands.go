@@ -6,7 +6,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/HonLuk/my-plane/internal/api"
@@ -25,6 +27,7 @@ func (e *ExitError) Error() string { return e.Message }
 
 type runner struct {
 	output *output.Renderer
+	input  io.Reader
 }
 
 type commonOptions struct {
@@ -42,13 +45,20 @@ var valueFlags = map[string]bool{
 	"--state": true, "--priority": true, "--assignee": true, "--order-by": true,
 	"--name": true, "--identifier": true, "--description": true, "--description-html": true,
 	"--label": true, "--start": true, "--end": true, "--type": true, "--content-type": true,
+	"--body-html": true,
 }
 
 // Run dispatches one complete command. It does not construct an API client
 // until a command needs network access, so every help command works offline.
 func Run(args []string, renderer *output.Renderer) error {
+	return runWithInput(args, renderer, os.Stdin)
+}
+
+// runWithInput keeps interactive command behavior testable without changing
+// the public Run entry point used by the executable and existing callers.
+func runWithInput(args []string, renderer *output.Renderer, input io.Reader) error {
 	args = extractGlobalFormat(args)
-	r := &runner{output: renderer}
+	r := &runner{output: renderer, input: input}
 	if len(args) == 0 {
 		r.printRootHelp()
 		return &ExitError{Code: 1, Silent: true}

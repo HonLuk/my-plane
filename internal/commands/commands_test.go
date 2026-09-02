@@ -152,3 +152,48 @@ func TestIssueWritesSendStringPriorityValues(t *testing.T) {
 		t.Fatalf("priorities = %v, want [low high]", priorities)
 	}
 }
+
+func TestIssueCreateAndUpdateUseSharedContentHTML(t *testing.T) {
+	var payloads []map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		switch {
+		case request.Method == http.MethodPost && request.URL.Path == "/api/v1/workspaces/ws/projects/project-id/work-items/":
+			var payload map[string]any
+			if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+				t.Errorf("decode create payload: %v", err)
+			}
+			payloads = append(payloads, payload)
+			_, _ = writer.Write([]byte(`{"id":"created-issue","name":"Task"}`))
+		case request.Method == http.MethodPatch && request.URL.Path == "/api/v1/workspaces/ws/projects/project-id/work-items/issue-id/":
+			var payload map[string]any
+			if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+				t.Errorf("decode update payload: %v", err)
+			}
+			payloads = append(payloads, payload)
+			_, _ = writer.Write([]byte(`{"id":"issue-id","description_html":"<p>Updated</p>"}`))
+		default:
+			http.NotFound(writer, request)
+		}
+	}))
+	defer server.Close()
+
+	t.Setenv("PLANE_API_KEY", "test-key")
+	t.Setenv("PLANE_WORKSPACE", "ws")
+	t.Setenv("PLANE_BASE_URL", server.URL)
+	var out bytes.Buffer
+	renderer := output.NewPlainRenderer(&out, &bytes.Buffer{})
+	if err := Run([]string{"issues", "create", "-p", "project-id", "--name", "Task", "--description", "# Summary\n\n**Details**"}, renderer); err != nil {
+		t.Fatal(err)
+	}
+	if payloads[0]["description_html"] != "<h1>Summary</h1><p><strong>Details</strong></p>" {
+		t.Fatalf("create payload = %#v", payloads[0])
+	}
+
+	if err := Run([]string{"issues", "update", "-p", "project-id", "issue-id", "--description-html", "<p><em>Updated</em></p>"}, renderer); err != nil {
+		t.Fatal(err)
+	}
+	if payloads[1]["description_html"] != "<p><em>Updated</em></p>" {
+		t.Fatalf("update payload = %#v", payloads[1])
+	}
+}
