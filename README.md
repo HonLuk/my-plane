@@ -221,6 +221,9 @@ Invoke commands as `"$PLANE_CLI" ...`; the skill does not assume that a bare
 # Get work item by UUID
 "$PLANE_CLI" issues get -p PROJECT_ID ISSUE_UUID
 
+# Read only work item relations
+"$PLANE_CLI" issues relations -p PROJECT_ID ISSUE_ID -f json
+
 # Create a work item
 "$PLANE_CLI" issues create -p PROJECT_ID --name "Fix login bug" --priority high
 "$PLANE_CLI" issues create -p PROJECT_ID --name "Rich feature" \
@@ -301,6 +304,37 @@ Invoke commands as `"$PLANE_CLI" ...`; the skill does not assume that a bare
 "$PLANE_CLI" issues list -p PROJECT_ID -f json
 ```
 
+`issues get` and `issues get-short` include a `relations` object alongside
+`parent` in both JSON and ordinary detail output. The CLI reads the separate
+work-item relations endpoint when the detail response does not already contain
+it. Relation groups include `relates_to`, `blocking`, `blocked_by`, `duplicate`,
+`start_before`, `start_after`, `finish_before`, and `finish_after`. Each reference
+is preserved as returned by the server; on the customized Plane API it contains
+`project_id` and `issue_id`, so cross-project work items can be queried directly.
+Empty groups mean no relations of that type. An empty `parent` alone does not
+mean there are no relations. Failed or unsupported relation reads return an
+error rather than incomplete details. `issues list` and `issues search` keep
+their original API response and do not fetch relations for each work item.
+
+When the API supplies `project_type` (`feature`, `bug`, or `other`), JSON and
+ordinary detail output retain it, and list tables add a `PROJECT_TYPE` column.
+Missing, null, or blank types are omitted, including in expanded project objects.
+A mixed list shows the type column if any row has a value, with `—` for untyped
+rows; a fully untyped list has no type column.
+
+For example, ordinary detail output previously showed only `parent` and could
+show an empty `project_type`. It now omits the empty type and includes relations:
+
+```text
+# Before (relevant fields)
+  parent        —
+  project_type  —
+
+# After (relevant fields)
+  parent     —
+  relations  {"relates_to":[{"project_id":"FEATURE_PROJECT_UUID","issue_id":"REQUIREMENT_UUID"}]}
+```
+
 ### Getting Help
 
 Every command has detailed help available:
@@ -324,8 +358,9 @@ Every command has detailed help available:
 | `"$PLANE_CLI" issues list -p PROJECT_ID` | List work items |
 | `"$PLANE_CLI" issues list -p PROJECT_ID --priority high` | Filter by priority |
 | `"$PLANE_CLI" issues list -p PROJECT_ID --state STATE_ID` | Filter by state |
-| `"$PLANE_CLI" issues get -p PROJECT_ID ISSUE_ID` | Get work item by UUID |
-| `"$PLANE_CLI" issues get-short PROJECT-SEQ` | Get work item by short ID (e.g., PROJ-SEQ) |
+| `"$PLANE_CLI" issues get -p PROJECT_ID ISSUE_ID` | Get work item details and relations by UUID |
+| `"$PLANE_CLI" issues get-short PROJECT-SEQ` | Get work item details and relations by short ID (e.g., PROJ-SEQ) |
+| `"$PLANE_CLI" issues relations -p PROJECT_ID ISSUE_ID` | Read work item relations grouped by type |
 | `"$PLANE_CLI" issues create -p PROJECT_ID --name N` | Create work item |
 | `"$PLANE_CLI" issues update -p PROJECT_ID ISSUE_ID [--fields]` | Update work item |
 | `"$PLANE_CLI" issues assign -p PROJECT_ID ISSUE_ID USER_ID...` | Assign work item |

@@ -14,7 +14,7 @@ const documentedIssueSearchLimit = 100
 
 func (r *runner) runIssues(args []string) error {
 	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
-		r.output.Println(`Usage: plane issues <list|get|create|update|assign|delete|search|get-short> [options]
+		r.output.Println(`Usage: plane issues <list|get|create|update|assign|delete|search|get-short|relations> [options]
 
 List, create, update, assign, delete, and search work items.`)
 		return nil
@@ -36,6 +36,8 @@ List, create, update, assign, delete, and search work items.`)
 		return r.issuesSearch(args[1:])
 	case "get-short":
 		return r.issuesGetShort(args[1:])
+	case "relations":
+		return r.issuesRelations(args[1:])
 	default:
 		return fmt.Errorf("unknown issues subcommand %q", args[0])
 	}
@@ -111,7 +113,7 @@ func (r *runner) issuesList(args []string) error {
 }
 
 func (r *runner) issuesGet(args []string) error {
-	set := r.newFlagSet("issues get", "Usage: plane issues get --project PROJECT_ID ISSUE_ID [options]\n\nView full details of a specific work item by UUID.")
+	set := r.newFlagSet("issues get", "Usage: plane issues get --project PROJECT_ID ISSUE_ID [options]\n\nView full details and relations of a specific work item by UUID.")
 	options := addCommon(set, false)
 	project := addProjectAliases(set)
 	help, err := parseFlags(set, args)
@@ -134,6 +136,9 @@ func (r *runner) issuesGet(args []string) error {
 	}
 	data, err := r.request(client, "GET", "/workspaces/"+client.Workspace+"/projects/"+*project+"/work-items/"+issue+"/", nil)
 	if err != nil {
+		return err
+	}
+	if err := r.includeIssueRelations(client, data, *project, issue); err != nil {
 		return err
 	}
 	r.output.Format(data, options.format, true)
@@ -427,7 +432,7 @@ func normalizeSearchIssueResponse(data any) any {
 }
 
 func (r *runner) issuesGetShort(args []string) error {
-	set := r.newFlagSet("issues get-short", "Usage: plane issues get-short PROJECT-SEQ [options]\n\nQuick access to a work item using its short identifier format.")
+	set := r.newFlagSet("issues get-short", "Usage: plane issues get-short PROJECT-SEQ [options]\n\nQuick access to work item details and relations using its short identifier format.")
 	options := addCommon(set, false)
 	help, err := parseFlags(set, args)
 	if help || err != nil {
@@ -451,7 +456,80 @@ func (r *runner) issuesGetShort(args []string) error {
 	if err != nil {
 		return err
 	}
+	if err := r.includeIssueRelations(client, data, "", ""); err != nil {
+		return err
+	}
 	r.output.Format(data, options.format, true)
+	return nil
+}
+
+// Relations are separate from parent. Read the dedicated endpoint rather than
+// assuming an empty parent means the work item has no related requirements.
+func (r *runner) includeIssueRelations(client *api.Client, data any, projectID, issueID string) error {
+	object, ok := data.(map[string]any)
+	if !ok {
+		return errors.New("could not read work item relations: expected a work item object")
+	}
+	if _, ok := object["relations"].(map[string]any); ok {
+		return nil
+	}
+	if projectID == "" {
+		projectID, _ = object["project"].(string)
+		if project, ok := object["project"].(map[string]any); ok {
+			projectID, _ = project["id"].(string)
+		}
+	}
+	if issueID == "" {
+		issueID, _ = object["id"].(string)
+	}
+	if projectID == "" || issueID == "" {
+		return errors.New("could not read work item relations: response is missing project or work item ID")
+	}
+	relations, err := r.fetchIssueRelations(client, projectID, issueID)
+	if err != nil {
+		return err
+	}
+	object["relations"] = relations
+	return nil
+}
+
+func (r *runner) fetchIssueRelations(client *api.Client, projectID, issueID string) (any, error) {
+	if err := validateIDs(struct{ value, name string }{projectID, "project ID"}, struct{ value, name string }{issueID, "issue ID"}); err != nil {
+		return nil, err
+	}
+	data, err := r.request(client, "GET", "/workspaces/"+client.Workspace+"/projects/"+projectID+"/work-items/"+issueID+"/relations/", nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not read work item relations: %w", err)
+	}
+	if _, ok := data.(map[string]any); !ok {
+		return nil, errors.New("could not read work item relations: expected relations grouped by type")
+	}
+	return data, nil
+}
+
+func (r *runner) issuesRelations(args []string) error {
+	set := r.newFlagSet("issues relations", "Usage: plane issues relations --project PROJECT_ID ISSUE_ID [options]\n\nRead work item relations grouped by type, including cross-project references.")
+	options := addCommon(set, false)
+	project := addProjectAliases(set)
+	help, err := parseFlags(set, args)
+	if help || err != nil {
+		return err
+	}
+	if *project == "" || len(set.Args()) != 1 {
+		return errors.New("usage: plane issues relations --project PROJECT_ID ISSUE_ID")
+	}
+	if err := validateFormat(options.format); err != nil {
+		return err
+	}
+	client, err := r.client()
+	if err != nil {
+		return err
+	}
+	data, err := r.fetchIssueRelations(client, *project, set.Args()[0])
+	if err != nil {
+		return err
+	}
+	r.output.Format(data, options.format, false)
 	return nil
 }
 

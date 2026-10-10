@@ -99,6 +99,9 @@ The examples below assume `PLANE_CLI` points to the bundled binary.
 "$PLANE_CLI" issues get -p PROJECT_ID ISSUE_ID
 "$PLANE_CLI" issues get-short PROJ-SEQ  # e.g., PROJ-123 (fastest way)
 
+# Read only work item relations
+"$PLANE_CLI" issues relations -p PROJECT_ID ISSUE_ID -f json
+
 # Create
 "$PLANE_CLI" issues create -p PROJECT_ID --name "Fix login bug" --priority high
 "$PLANE_CLI" issues create -p PROJECT_ID --name "Feature" --assignee USER_ID --label LABEL_ID
@@ -119,6 +122,24 @@ The examples below assume `PLANE_CLI` points to the bundled binary.
 # Search across workspace by title or supported body-search fields
 "$PLANE_CLI" issues search "login bug"
 ```
+
+`issues get` and `issues get-short` include a `relations` object alongside
+`parent` in both JSON and ordinary detail output. The CLI reads the separate
+work-item relations endpoint when the detail response does not already contain
+it. Relation groups include `relates_to`, `blocking`, `blocked_by`, `duplicate`,
+`start_before`, `start_after`, `finish_before`, and `finish_after`. Each reference
+is preserved as returned by the server; on the customized Plane API it contains
+`project_id` and `issue_id`, so cross-project work items can be queried directly.
+Empty groups mean no relations of that type. An empty `parent` alone does not
+mean there are no relations. Failed or unsupported relation reads return an
+error rather than incomplete details. `issues list` and `issues search` keep
+their original API response and do not fetch relations for each work item.
+
+When the API supplies `project_type` (`feature`, `bug`, or `other`), JSON and
+ordinary detail output retain it, and list tables add a `PROJECT_TYPE` column.
+Missing, null, or blank types are omitted, including in expanded project objects.
+A mixed list shows the type column if any row has a value, with `—` for untyped
+rows; a fully untyped list has no type column.
 
 ### Comments
 

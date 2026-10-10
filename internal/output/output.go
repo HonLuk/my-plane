@@ -71,6 +71,7 @@ func (r *Renderer) Errorf(format string, args ...any) {
 // Format routes a decoded API value to JSON or the same heuristic table views
 // used by the original CLI.
 func (r *Renderer) Format(data any, format string, showPagination bool) {
+	data = omitEmptyProjectType(data)
 	if format == "json" {
 		encoded, err := json.MarshalIndent(data, "", "  ")
 		if err != nil {
@@ -101,6 +102,36 @@ func (r *Renderer) Format(data any, format string, showPagination bool) {
 	default:
 		r.Println(resolve(typed))
 	}
+}
+
+// Older Plane installations omit project_type or return null/empty strings.
+// Copy decoded containers so output cleanup also covers expanded projects without
+// changing the API response held by a command handler.
+func omitEmptyProjectType(data any) any {
+	switch value := data.(type) {
+	case map[string]any:
+		cleaned := make(map[string]any, len(value))
+		for key, item := range value {
+			if key == "project_type" && (item == nil || isBlankString(item)) {
+				continue
+			}
+			cleaned[key] = omitEmptyProjectType(item)
+		}
+		return cleaned
+	case []any:
+		cleaned := make([]any, len(value))
+		for index, item := range value {
+			cleaned[index] = omitEmptyProjectType(item)
+		}
+		return cleaned
+	default:
+		return data
+	}
+}
+
+func isBlankString(value any) bool {
+	text, ok := value.(string)
+	return ok && strings.TrimSpace(text) == ""
 }
 
 type pagination struct {
@@ -199,6 +230,11 @@ type column struct {
 }
 
 func (r *Renderer) printTable(rows []any, columns []column) {
+	// Scan all rows: the first project/work item may have no type while later
+	// rows do. Missing values in a mixed list retain the usual empty-cell marker.
+	if anyHas(rows, "project_type") {
+		columns = append(columns, column{"project_type", "PROJECT_TYPE", 20})
+	}
 	widths := make([]int, len(columns))
 	for index, item := range columns {
 		widths[index] = runeLen(item.header)
