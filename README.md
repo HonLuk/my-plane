@@ -71,11 +71,11 @@ installation step and no global `plane` command or `PATH` modification is
 needed.
 
 If the download fails because of a network error, retry with the [GitHub proxy
-URL](https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip),
+URL](https://gh-proxy.org/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip),
 replacing the target suffix when necessary:
 
 ```bash
-npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip
+npx skills add https://gh-proxy.org/https://github%2Ecom/HonLuk/my-plane/releases/latest/download/my-plane-skill-linux-amd64.zip
 ```
 
 ### Via Release Download (no Node.js required)

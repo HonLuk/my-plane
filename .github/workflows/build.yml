@@ -93,7 +93,7 @@ jobs:
             If the direct download fails because of a network error, retry with the GitHub proxy URL:
 
             ```bash
-            npx skills add https://gh-proxy.com/https://github%2Ecom/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-linux-amd64.zip
+            npx skills add https://gh-proxy.org/https://github%2Ecom/HonLuk/my-plane/releases/download/${{ steps.version.outputs.VERSION }}/my-plane-skill-linux-amd64.zip
             ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
